@@ -1,0 +1,133 @@
+@import 'tailwindcss';
+
+/* Палитра: эгейский синий + медь (цвет карты Кипра на флаге). В Telegram берём цвета темы. */
+:root {
+  --bg: var(--tg-bg2, #f2f4f7);
+  --card: var(--tg-card, #ffffff);
+  --text: var(--tg-text, #14181f);
+  --muted: var(--tg-hint, #6b7382);
+  --accent: var(--tg-accent, #1665d8);
+  --accent-text: var(--tg-accent-text, #ffffff);
+  --accent-soft: color-mix(in srgb, var(--accent) 12%, transparent);
+  --copper: #c46f28;
+  --copper-soft: color-mix(in srgb, var(--copper) 14%, transparent);
+  --ok: #1f9d55;
+  --ok-soft: color-mix(in srgb, var(--ok) 14%, transparent);
+  --warn: #d98b0b;
+  --warn-soft: color-mix(in srgb, var(--warn) 16%, transparent);
+  --bad: var(--tg-bad, #dc3b3b);
+  --bad-soft: color-mix(in srgb, var(--bad) 13%, transparent);
+  --border: color-mix(in srgb, var(--text) 10%, transparent);
+  --shadow: 0 1px 2px rgb(0 0 0 / 0.04), 0 2px 8px rgb(0 0 0 / 0.04);
+  color-scheme: light;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) {
+    --bg: var(--tg-bg2, #0e1116);
+    --card: var(--tg-card, #181c23);
+    --text: var(--tg-text, #e9edf3);
+    --muted: var(--tg-hint, #8d96a5);
+    --accent: var(--tg-accent, #4a8ff0);
+    --border: color-mix(in srgb, var(--text) 12%, transparent);
+    --shadow: none;
+    color-scheme: dark;
+  }
+}
+:root[data-theme='dark'] {
+  --bg: var(--tg-bg2, #0e1116);
+  --card: var(--tg-card, #181c23);
+  --text: var(--tg-text, #e9edf3);
+  --muted: var(--tg-hint, #8d96a5);
+  --accent: var(--tg-accent, #4a8ff0);
+  --border: color-mix(in srgb, var(--text) 12%, transparent);
+  --shadow: none;
+  color-scheme: dark;
+}
+
+@theme inline {
+  --color-bg: var(--bg);
+  --color-card: var(--card);
+  --color-fg: var(--text);
+  --color-muted: var(--muted);
+  --color-accent: var(--accent);
+  --color-accent-fg: var(--accent-text);
+  --color-accent-soft: var(--accent-soft);
+  --color-copper: var(--copper);
+  --color-copper-soft: var(--copper-soft);
+  --color-ok: var(--ok);
+  --color-ok-soft: var(--ok-soft);
+  --color-warn: var(--warn);
+  --color-warn-soft: var(--warn-soft);
+  --color-bad: var(--bad);
+  --color-bad-soft: var(--bad-soft);
+  --color-line: var(--border);
+  --font-sans: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', Roboto, 'Noto Sans', 'Helvetica Neue', Arial, sans-serif;
+}
+
+html, body {
+  background: var(--bg);
+  color: var(--text);
+  -webkit-tap-highlight-color: transparent;
+  -webkit-text-size-adjust: 100%;
+  overscroll-behavior-y: none;
+}
+
+body {
+  margin: 0;
+  font-family: var(--font-sans);
+  min-height: 100dvh;
+}
+
+button { cursor: pointer; touch-action: manipulation; }
+button:disabled { cursor: default; }
+
+.card {
+  background: var(--card);
+  border-radius: 18px;
+  box-shadow: var(--shadow);
+}
+
+.gr { font-feature-settings: 'kern'; letter-spacing: 0.005em; }
+
+.hole {
+  display: inline-block;
+  padding: 0 0.4em;
+  margin: 0 0.1em;
+  border-radius: 0.5em;
+  background: var(--warn-soft);
+  color: var(--warn);
+  font-size: 0.85em;
+  font-weight: 600;
+  line-height: 1.5;
+}
+
+.speaking { background: var(--accent-soft); border-radius: 8px; box-shadow: 0 0 0 4px var(--accent-soft); }
+
+.safe-bottom { padding-bottom: max(12px, env(safe-area-inset-bottom)); }
+.safe-top { padding-top: env(safe-area-inset-top); }
+
+.fade-in { animation: fade 0.18s ease-out; }
+@keyframes fade { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
+
+.flip-in { animation: flip 0.22s ease-out; }
+@keyframes flip { from { opacity: 0; transform: scale(0.98); } to { opacity: 1; transform: none; } }
+
+.pulse { animation: pulse 1.4s ease-in-out infinite; }
+@keyframes pulse { 50% { opacity: 0.45; } }
+
+input, textarea, select {
+  font: inherit;
+  color: inherit;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 10px 12px;
+  width: 100%;
+  outline: none;
+}
+input:focus, textarea:focus, select:focus { border-color: var(--accent); }
+textarea { resize: vertical; min-height: 64px; }
+
+.no-scrollbar::-webkit-scrollbar { display: none; }
+.no-scrollbar { scrollbar-width: none; }

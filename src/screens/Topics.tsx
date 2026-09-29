@@ -121,7 +121,7 @@ function ItemCard({ item, view }: { item: QItem; topic: Topic; view: View }) {
               <div className="gr text-[16px] font-semibold text-accent">{q.gr}</div>
               {view === 'all' && <div className="text-[13px] text-muted">{q.ru}</div>}
             </div>
-            <SpeakBtn text={q.gr} size={18} speakKey={`${item.id}:q${i}`} />
+            <SpeakBtn text={q.gr} size={18} speakKey={`${item.id}:q${i}`} role="examiner" />
           </div>
         ))}
       </div>

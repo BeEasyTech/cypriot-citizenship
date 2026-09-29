@@ -5,7 +5,7 @@ import { useNav } from '../router'
 import { FIELDS, OPTIONAL_FIELDS, SECTIONS, isFieldFilled, isFieldVisible } from '../data/profile'
 import { Screen, Section, List, Row, Ring, Btn, Chip, Toggle, Segmented, SpeakBtn } from '../ui/kit'
 import { FieldEditor } from '../ui/fields'
-import { useVoices, ttsSupported, speak } from '../lib/tts'
+import { useVoices, ttsSupported, speak, useCloud } from '../lib/tts'
 import { cloudAvailable } from '../lib/telegram'
 import { exportJson, importJson, syncNow, useSync } from '../sync'
 
@@ -133,7 +133,9 @@ export function Settings() {
       </Section>
 
       <Section title="Озвучка">
-        <div className="card space-y-4 p-4">
+        <CloudVoice />
+        <div className="card mt-3 space-y-4 p-4">
+          <div className="text-[14px] font-semibold">Голос браузера {useCloud.getState().available ? '(запасной, без интернета)' : ''}</div>
           {!ttsSupported && <div className="text-[14px] text-bad">Этот браузер не поддерживает синтез речи.</div>}
           {ttsSupported && voices.length === 0 && (
             <div className="rounded-xl bg-warn-soft p-3 text-[14px] text-warn">
@@ -189,7 +191,7 @@ export function Settings() {
             }} />
           </div>
           {msg && <div className="text-[14px] text-muted">{msg}</div>}
-          <div className="text-[12px] text-muted">Личные данные (адрес, зарплата) никуда не отправляются, кроме вашего Telegram-облака, если вы открыли приложение в Telegram.</div>
+          <div className="text-[12px] text-muted">Анкета хранится на устройстве и (в Telegram) в вашем облаке Telegram. При включённой облачной озвучке озвучиваемый текст, включая ваши ответы, отправляется в Azure для синтеза речи.</div>
         </div>
       </Section>
 
@@ -198,5 +200,57 @@ export function Settings() {
       </Section>
       <div className="mt-6 text-center text-[12px] text-muted">Καλή επιτυχία στη συνέντευξη! 🇨🇾</div>
     </Screen>
+  )
+}
+
+function CloudVoice() {
+  const cloud = useCloud()
+  const st = useStore((s) => s.settings)
+  const set = useStore((s) => s.setSettings)
+  const [help, setHelp] = useState(false)
+  const test = (role: 'examiner' | 'me', text: string) => speak(text, { rate: st.rate, role })
+
+  if (cloud.available === null) return <div className="card p-4 text-[14px] text-muted">Проверяю облачную озвучку…</div>
+
+  if (!cloud.available) {
+    return (
+      <div className="card space-y-2 p-4">
+        <div className="text-[14px] font-semibold">Облачные голоса Azure — не подключены</div>
+        <div className="text-[14px] text-muted">Естественные греческие нейроголоса: мужской (Nestoras) для экзаменатора, женский (Athina). Нужен бесплатный ключ Azure.</div>
+        <button onClick={() => setHelp(!help)} className="text-[14px] font-semibold text-accent">{help ? 'Скрыть инструкцию' : 'Как подключить'}</button>
+        {help && (
+          <ol className="list-decimal space-y-1.5 pl-5 text-[14px] leading-relaxed">
+            <li>Зайдите на <b>portal.azure.com</b> и создайте бесплатный аккаунт (карта нужна только для проверки).</li>
+            <li>«Создать ресурс» → найдите <b>Speech</b> (Azure AI Speech) → «Создать».</li>
+            <li>Регион: <b>West Europe</b>, тариф: <b>Free F0</b> (500 тыс. символов в месяц бесплатно).</li>
+            <li>Откройте ресурс → «Ключи и конечная точка» → скопируйте <b>KEY 1</b> и <b>Location/Region</b>.</li>
+            <li>В Vercel: Project → Settings → Environment Variables → добавьте <code>AZURE_SPEECH_KEY</code> и <code>AZURE_SPEECH_REGION</code> (например, <code>westeurope</code>) → Redeploy.</li>
+          </ol>
+        )}
+      </div>
+    )
+  }
+
+  return (
+    <div className="card space-y-4 p-4">
+      <Toggle on={st.cloudTts} onChange={(v) => set({ cloudTts: v })} label="Облачные нейроголоса (Azure)" />
+      {st.cloudTts && (
+        <>
+          <div>
+            <span className="mb-1.5 block text-[14px] font-semibold">Голос экзаменатора</span>
+            <Segmented value={st.examinerVoice} onChange={(v) => set({ examinerVoice: v })} options={[{ value: 'm', label: 'Мужской' }, { value: 'f', label: 'Женский' }]} />
+          </div>
+          <div>
+            <span className="mb-1.5 block text-[14px] font-semibold">Голос ваших ответов и слов</span>
+            <Segmented value={st.myVoice} onChange={(v) => set({ myVoice: v })} options={[{ value: 'auto', label: 'Как мой род' }, { value: 'm', label: 'Мужской' }, { value: 'f', label: 'Женский' }]} />
+          </div>
+          <div className="flex flex-wrap gap-2">
+            <Btn kind="soft" onClick={() => test('examiner', 'Καλημέρα σας. Πώς σας λένε;')}><Volume2 size={17} /> Экзаменатор</Btn>
+            <Btn kind="soft" onClick={() => test('me', 'Με λένε Άννα. Είμαι από τη Ρωσία.')}><Volume2 size={17} /> Мой голос</Btn>
+          </div>
+          <div className="text-[12px] text-muted">Прослушанные фразы кешируются. Без интернета включается голос браузера.</div>
+        </>
+      )}
+    </div>
   )
 }

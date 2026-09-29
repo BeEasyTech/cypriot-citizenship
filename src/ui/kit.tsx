@@ -2,7 +2,7 @@ import { useEffect, type ReactNode } from 'react'
 import { ChevronLeft, Volume2, Square } from 'lucide-react'
 import { useNav } from '../router'
 import { tg, haptic } from '../lib/telegram'
-import { speak, speakAll, stop, useSpeakingKey, type Lang } from '../lib/tts'
+import { speak, speakAll, stop, useSpeakingKey, type Lang, type Role } from '../lib/tts'
 import { useStore } from '../store'
 import type { Tri } from '../types'
 
@@ -128,7 +128,7 @@ export function useTtsOpts() {
 }
 
 /** Кнопка «прослушать»: одна фраза или последовательность. */
-export function SpeakBtn({ text, texts, lang = 'el', slow, size = 20, className, label, speakKey }: {
+export function SpeakBtn({ text, texts, lang = 'el', slow, size = 20, className, label, speakKey, role = 'me' }: {
   text?: string
   texts?: string[]
   lang?: Lang
@@ -137,6 +137,7 @@ export function SpeakBtn({ text, texts, lang = 'el', slow, size = 20, className,
   className?: string
   label?: ReactNode
   speakKey?: string
+  role?: Role
 }) {
   const o = useTtsOpts()
   const cur = useSpeakingKey()
@@ -149,8 +150,8 @@ export function SpeakBtn({ text, texts, lang = 'el', slow, size = 20, className,
         e.stopPropagation()
         haptic.tap()
         if (active) return stop()
-        if (texts) speakAll(texts, { ...o, rate, lang, keyPrefix: key })
-        else if (text) speak(text, { ...o, rate, lang, key })
+        if (texts) speakAll(texts, { ...o, rate, lang, role, keyPrefix: key })
+        else if (text) speak(text, { ...o, rate, lang, role, key })
       }}
       className={cx('inline-flex shrink-0 items-center justify-center gap-1.5 rounded-full text-accent active:bg-accent-soft',
         label ? 'min-h-9 px-3 text-[14px] font-semibold bg-accent-soft' : 'h-9 w-9', className)}

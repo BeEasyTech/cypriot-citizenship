@@ -47,7 +47,7 @@ export default function Listen() {
     const distract = shuffle(active.filter((i) => i.id !== item.id && i.title !== item.title)).slice(0, 3)
     setRound({ item, q, options: shuffle([item, ...distract]) })
     setChosen(null)
-    setTimeout(() => speak(q.gr, { ...o, key: 'lq' }), 250)
+    setTimeout(() => speak(q.gr, { ...o, role: 'examiner', key: 'lq' }), 250)
   }
 
   useEffect(() => {
@@ -83,10 +83,10 @@ export default function Listen() {
           <div className="card mt-2 flex flex-col items-center p-6 text-center">
             <div className="text-[14px] text-muted">О чём спрашивает экзаменатор?</div>
             <div className="mt-4 flex items-center gap-3">
-              <button onClick={() => speak(round.q.gr, { ...o, key: 'lq' })} className="flex h-20 w-20 items-center justify-center rounded-full bg-accent text-accent-fg shadow-lg active:scale-95 transition" aria-label="Прослушать">
+              <button onClick={() => speak(round.q.gr, { ...o, role: 'examiner', key: 'lq' })} className="flex h-20 w-20 items-center justify-center rounded-full bg-accent text-accent-fg shadow-lg active:scale-95 transition" aria-label="Прослушать">
                 <Volume2 size={34} />
               </button>
-              <button onClick={() => speak(round.q.gr, { ...o, rate: Math.max(0.5, o.rate * 0.65), key: 'lq' })} className="flex h-14 w-14 items-center justify-center rounded-full bg-accent-soft text-accent active:scale-95 transition" aria-label="Медленно">
+              <button onClick={() => speak(round.q.gr, { ...o, role: 'examiner', rate: Math.max(0.5, o.rate * 0.65), key: 'lq' })} className="flex h-14 w-14 items-center justify-center rounded-full bg-accent-soft text-accent active:scale-95 transition" aria-label="Медленно">
                 <Turtle size={24} />
               </button>
             </div>

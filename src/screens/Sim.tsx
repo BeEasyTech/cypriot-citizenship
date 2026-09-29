@@ -132,7 +132,7 @@ function Question({ step, n, total, onScore }: { step: Step; n: number; total: n
 
   const play = (slow = false) => {
     setAsked((a) => a + 1)
-    speak(step.q.gr, { ...o, rate: slow ? Math.max(0.5, o.rate * 0.7) : o.rate, key: 'simq' })
+    speak(step.q.gr, { ...o, role: 'examiner', rate: slow ? Math.max(0.5, o.rate * 0.7) : o.rate, key: 'simq' })
   }
 
   useEffect(() => { const t = setTimeout(() => play(), 350); return () => clearTimeout(t) }, []) // eslint-disable-line react-hooks/exhaustive-deps
@@ -204,7 +204,7 @@ function Question({ step, n, total, onScore }: { step: Step; n: number; total: n
                 <div className="text-[12px] font-semibold uppercase tracking-wide text-muted">Вопрос был</div>
                 <div className="mt-1 flex items-start gap-2">
                   <div className="gr flex-1 text-[18px] font-medium">{step.q.gr}</div>
-                  <SpeakBtn text={step.q.gr} speakKey="simq" />
+                  <SpeakBtn text={step.q.gr} speakKey="simq" role="examiner" />
                 </div>
                 <div className="text-[14px] text-muted">{step.q.ru}</div>
               </div>

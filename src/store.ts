@@ -49,6 +49,11 @@ export interface Settings {
   simCount: number
   simTimer: number
   simShowText: boolean
+  /** Облачная озвучка (Azure), если сервер настроен. */
+  cloudTts: boolean
+  examinerVoice: 'm' | 'f'
+  /** Голос для моих ответов: по роду из анкеты или вручную. */
+  myVoice: 'auto' | 'm' | 'f'
   onboarded: boolean
   updated: number
 }
@@ -102,6 +107,9 @@ export const DEFAULT_SETTINGS: Settings = {
   simCount: 10,
   simTimer: 60,
   simShowText: false,
+  cloudTts: true,
+  examinerVoice: 'm',
+  myVoice: 'auto',
   onboarded: false,
   updated: 0,
 }
@@ -191,6 +199,16 @@ export const useStore = create<State & Actions>()(
       name: 'greek-interview-v1',
       version: 1,
       partialize: (s) => pickState(s),
+      // Новые поля настроек/анкеты из будущих версий подставляются значениями по умолчанию.
+      merge: (persisted, current) => {
+        const p = (persisted ?? {}) as Partial<State>
+        return {
+          ...current,
+          ...p,
+          profile: { ...DEFAULT_PROFILE, ...(p.profile ?? {}) },
+          settings: { ...DEFAULT_SETTINGS, ...(p.settings ?? {}) },
+        }
+      },
     },
   ),
 )

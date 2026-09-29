@@ -7,7 +7,7 @@ import {
   allCards, answerOf, buildQueue, maxIvlFor, useCtx, useDecks, useTopics, vocabGr, type CardRef, type SessionFilter,
 } from '../content'
 import { previewLabel, type Rating, DAY } from '../lib/srs'
-import { speak, speakAll, stop } from '../lib/tts'
+import { prefetch, speak, speakAll, stop } from '../lib/tts'
 import { haptic } from '../lib/telegram'
 import { Btn, SpeakBtn, TriLine, cx, useTtsOpts, Bar } from '../ui/kit'
 import type { Tri } from '../types'
@@ -33,6 +33,17 @@ export default function Session({ filter, title }: { filter?: SessionFilter; tit
   const maxIvl = maxIvlFor(store)
 
   const card = queue[0]
+  const upcoming = queue[1]
+
+  // Заранее скачиваем звук следующей карточки, чтобы не было паузы.
+  useEffect(() => {
+    if (!upcoming) return
+    const rate = useStore.getState().settings.rate
+    if (upcoming.kind === 'qa') {
+      prefetch(upcoming.item.questions(ctx).map((q) => q.gr), 'examiner', rate)
+      prefetch(answerOf(upcoming.item, ctx, useStore.getState().overrides).map((l) => l.gr), 'me', rate)
+    } else prefetch([vocabGr(upcoming.v, ctx)], 'me', rate)
+  }, [upcoming, ctx])
   const total = initial.queue.length
   const progress = total ? (done + seen.size) / (2 * total) : 0
 
@@ -122,7 +133,7 @@ function QaCard({ card, flipped, onFlip }: { card: Extract<CardRef, { kind: 'qa'
   const answer = useMemo(() => answerOf(card.item, ctx, overrides), [card, ctx, overrides])
   const isNew = !useStore.getState().cards[card.id]?.reps
 
-  useEffect(() => { if (autoplay) speak(q.gr, { ...o, key: 'q' }) }, []) // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => { if (autoplay) speak(q.gr, { ...o, role: 'examiner', key: 'q' }) }, []) // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(() => { if (flipped && autoplay) speakAll(answer.map((l) => l.gr), { ...o, keyPrefix: 'ans' }) }, [flipped]) // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
@@ -134,11 +145,11 @@ function QaCard({ card, flipped, onFlip }: { card: Extract<CardRef, { kind: 'qa'
 
       <div className="card p-5">
         <div className="flex items-start gap-2">
-          <button onClick={() => speak(q.gr, { ...o, key: 'q' })} className="gr flex-1 text-left text-[24px] font-semibold leading-snug">{q.gr}</button>
-          <SpeakBtn text={q.gr} speakKey="q" />
+          <button onClick={() => speak(q.gr, { ...o, role: 'examiner', key: 'q' })} className="gr flex-1 text-left text-[24px] font-semibold leading-snug">{q.gr}</button>
+          <SpeakBtn text={q.gr} speakKey="q" role="examiner" />
         </div>
         <div className="mt-2 flex items-center gap-1">
-          <SpeakBtn text={q.gr} slow speakKey="q-slow" size={18} label={<><Turtle size={16} /> медленно</>} className="!bg-transparent !px-2 text-muted" />
+          <SpeakBtn text={q.gr} slow speakKey="q-slow" role="examiner" size={18} label={<><Turtle size={16} /> медленно</>} className="!bg-transparent !px-2 text-muted" />
           <button onClick={() => setQTr(!qTr)} className="flex min-h-9 items-center gap-1.5 rounded-full px-2 text-[14px] font-semibold text-muted active:bg-accent-soft">
             <Languages size={16} /> перевод
           </button>

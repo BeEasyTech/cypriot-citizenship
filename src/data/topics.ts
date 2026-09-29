@@ -95,9 +95,9 @@ const atTime = (v: unknown, label: string): Tri => {
   const [H, M] = v.split(':').map(Number)
   const h12 = H % 12 === 0 ? 12 : H % 12
   const mm = M ? `:${String(M).padStart(2, '0')}` : ''
-  const gr = H >= 5 && H < 12 ? 'το πρωί' : H === 12 ? 'το μεσημέρι' : H >= 13 && H < 20 ? 'το απόγευμα' : H >= 20 ? 'το βράδυ' : 'τη νύχτα'
+  const gr = H >= 5 && H < 12 ? 'το πρωί' : H === 12 || H === 13 ? 'το μεσημέρι' : H >= 14 && H < 20 ? 'το απόγευμα' : H >= 20 ? 'το βράδυ' : 'τη νύχτα'
   const ru = H >= 5 && H < 12 ? 'утра' : H >= 12 && H < 17 ? 'дня' : H >= 17 ? 'вечера' : 'ночи'
-  return tri(`στις ${h12}${mm} ${gr}`, `at ${h12}${mm} ${H < 12 ? 'a.m.' : 'p.m.'}`, `в ${h12}${mm} ${ru}`)
+  return tri(`${h12 === 1 ? 'στη' : 'στις'} ${h12}${mm} ${gr}`, `at ${h12}${mm} ${H < 12 ? 'a.m.' : 'p.m.'}`, `в ${h12}${mm} ${ru}`)
 }
 
 const ordinals = [
@@ -521,6 +521,7 @@ export const TOPICS: Topic[] = [
         questions: Q(
           t('Σε τι σχολείο πηγαίνουν τα παιδιά σας;', 'What school do your children go to?', 'В какую школу ходят ваши дети?'),
           t('Πού σπουδάζουν;', 'Where do they study?', 'Где они учатся?'),
+          t('Πού πάνε σχολείο τα παιδιά;', 'Where do the children go to school?', 'Куда дети ходят в школу?'),
         ),
         answer: (c) => kids(c).flatMap((k) => {
           const n = childName(k), f = k.gender === 'f'
@@ -889,7 +890,7 @@ export const TOPICS: Topic[] = [
           if (rest.length) {
             const j = joinTri(rest)
             const plural = rest.length > 1 || /^(?:τα|οι) /.test(rest[0].gr)
-            out.push(t(`Μου ${plural ? 'αρέσουν' : 'αρέσει'} επίσης ${j.gr}.`, `I also like ${j.en}.`, `Ещё мне нравится ${j.ru}.`))
+            out.push(t(`Μου ${plural ? 'αρέσουν' : 'αρέσει'} επίσης ${j.gr}.`, `I also like ${j.en}.`, `Ещё мне ${plural ? 'нравятся' : 'нравится'} ${j.ru}.`))
           }
           return out
         },
@@ -938,7 +939,7 @@ export const TOPICS: Topic[] = [
         answer: () => [
           t('Τις θρησκευτικές γιορτές, όπως τα Χριστούγεννα και το Πάσχα, τις γιορτάζουμε με την οικογένεια και τους φίλους μας.', 'We celebrate religious holidays, like Christmas and Easter, with our family and friends.', 'Религиозные праздники, например Рождество и Пасху, мы отмечаем с семьёй и друзьями.'),
           t('Πηγαίνουμε στην εκκλησία και μετά τρώμε όλοι μαζί.', 'We go to church and then we all eat together.', 'Ходим в церковь, а потом все вместе едим.'),
-          t('Στις εθνικές γιορτές, την 25η Μαρτίου, την 1η Απριλίου και την 1η Οκτωβρίου, βλέπουμε τις παρελάσεις των μαθητών.', 'On national holidays, 25 March, 1 April and 1 October, we watch the school parades.', 'В национальные праздники — 25 марта, 1 апреля и 1 октября — смотрим школьные парады.'),
+          t('Στις εθνικές γιορτές, την 25η Μαρτίου, την 1η Απριλίου και την 1η Οκτωβρίου, βλέπουμε τις παρελάσεις.', 'On national holidays, 25 March, 1 April and 1 October, we watch the parades.', 'В национальные праздники — 25 марта, 1 апреля и 1 октября — смотрим парады.'),
         ],
       },
       {
@@ -1051,7 +1052,7 @@ export const TOPICS: Topic[] = [
         questions: Q(t('Τι επάγγελμα έχετε;', 'What is your profession?', 'Какая у вас профессия?')),
         answer: (c) => {
           const p = c.text('profession', 'Профессия')
-          const out = [t(`Στο επάγγελμα είμαι ${p.gr}.`, `By profession I am a ${p.en}.`, `По профессии я ${p.ru}.`)]
+          const out = [t(`Το επάγγελμά μου είναι ${p.gr}.`, `By profession I am a ${p.en}.`, `По профессии я ${p.ru}.`)]
           if (isWorking(c)) {
             const j = jobTitle(c)
             if (j.gr !== p.gr) out.push(t(`Τώρα δουλεύω ως ${j.gr}.`, `Now I work as a ${j.en}.`, `Сейчас работаю: ${j.ru}.`))
@@ -1081,7 +1082,7 @@ export const TOPICS: Topic[] = [
           if (rest.length) {
             const j = joinTri(rest)
             const plural = rest.length > 1 || /^(?:τα|οι) /.test(rest[0].gr)
-            out.push(t(`Μου ${plural ? 'αρέσουν' : 'αρέσει'} επίσης ${j.gr}.`, `I also like ${j.en}.`, `Ещё мне нравится ${j.ru}.`))
+            out.push(t(`Μου ${plural ? 'αρέσουν' : 'αρέσει'} επίσης ${j.gr}.`, `I also like ${j.en}.`, `Ещё мне ${plural ? 'нравятся' : 'нравится'} ${j.ru}.`))
           }
           return out
         },
@@ -1318,7 +1319,7 @@ export const TOPICS: Topic[] = [
         questions: Q(t('Ποια μέρη της Κύπρου έχετε επισκεφτεί;', 'Which places in Cyprus have you visited?', 'Какие места Кипра вы посетили?')),
         answer: () => [
           t('Έχω επισκεφτεί την Πάφο, τη Λάρνακα, την Αγία Νάπα και το Τρόοδος.', 'I have visited Paphos, Larnaca, Ayia Napa and Troodos.', 'Я был(а) в Пафосе, Ларнаке, Айя-Напе и Троодосе.'),
-          t('Μου άρεσε πολύ η Πέτρα του Ρωμιού και το μοναστήρι του Κύκκου.', 'I really liked Aphrodite\'s Rock and Kykkos Monastery.', 'Мне очень понравились Скала Афродиты и монастырь Киккос.'),
+          t('Μου άρεσαν πολύ η Πέτρα του Ρωμιού και το μοναστήρι του Κύκκου.', 'I really liked Aphrodite\'s Rock and Kykkos Monastery.', 'Мне очень понравились Скала Афродиты и монастырь Киккос.'),
         ],
       },
       {

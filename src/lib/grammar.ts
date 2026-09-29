@@ -187,12 +187,12 @@ export function duration(from: Date): Tri {
   const y = yearsBetween(from)
   if (y >= 1) {
     return y === 1
-      ? tri('ένα χρόνο', 'one year', '1 год')
+      ? tri('έναν χρόνο', 'one year', '1 год')
       : tri(`${y} χρόνια`, `${y} years`, `${y} ${ruPlural(y, 'год', 'года', 'лет')}`)
   }
   const m = Math.max(1, monthsBetween(from))
   return m === 1
-    ? tri('ένα μήνα', 'one month', '1 месяц')
+    ? tri('έναν μήνα', 'one month', '1 месяц')
     : tri(`${m} μήνες`, `${m} months`, `${m} ${ruPlural(m, 'месяц', 'месяца', 'месяцев')}`)
 }
 

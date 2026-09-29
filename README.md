@@ -1,32 +1,48 @@
-# React + TypeScript + Vite
+# Συνέντευξη — тренажёр собеседования на гражданство Кипра
 
-This template provides a minimal setup to get React working in Vite with HMR and some Oxlint rules.
+PWA и Telegram Mini App для подготовки к собеседованию на греческом.
 
-Currently, two official plugins are available:
+- **27 тем + дополнительные вопросы** (~75 пар «вопрос → ответ»), все формулировки экзаменатора.
+- **Личные ответы собираются из анкеты** на трёх языках: GR (основной), EN (запасной, если забыли слово), RU (перевод). Учитываются род, падежи городов, даты, числа. Любой ответ можно переписать вручную или добавить свой вопрос.
+- **Словарь**: 14 колод, 511 слов и фраз, включая 48 фраз-спасателей.
+- **Режимы**: карточки с интервальным повторением (SM-2), симуляция собеседования на слух, квиз «Узнай вопрос».
+- **Озвучка**: облачные нейроголоса Azure (мужской для экзаменатора, ваш — по роду) с кешем и офлайн-резервом на голос браузера.
+- **Данные**: localStorage + синхронизация через Telegram CloudStorage, экспорт/импорт JSON.
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+## Разработка
 
-## React Compiler
-
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
-
-## Expanding the Oxlint configuration
-
-If you are developing a production application, we recommend enabling type-aware lint rules by installing `oxlint-tsgolint` and editing `.oxlintrc.json`:
-
-```json
-{
-  "$schema": "./node_modules/oxlint/configuration_schema.json",
-  "plugins": ["react", "typescript", "oxc"],
-  "options": {
-    "typeAware": true
-  },
-  "rules": {
-    "react/rules-of-hooks": "error",
-    "react/only-export-components": ["warn", { "allowConstantExport": true }]
-  }
-}
+```bash
+npm install
+npm run dev          # http://localhost:5173 (без /api — озвучка голосом браузера)
+npx vercel dev       # вместе с /api/tts (нужен .env.local с ключом Azure)
+npm run build
 ```
 
-See the [Oxlint rules documentation](https://oxc.rs/docs/guide/usage/linter/rules) for the full list of rules and categories.
+## Деплой (Vercel)
+
+```bash
+npx vercel --prod
+```
+
+Переменные окружения (Project → Settings → Environment Variables):
+
+| Переменная | Пример |
+|---|---|
+| `AZURE_SPEECH_KEY` | ключ ресурса Azure AI Speech (тариф Free F0) |
+| `AZURE_SPEECH_REGION` | `westeurope` |
+
+## Telegram Mini App
+
+1. @BotFather → `/newbot`.
+2. `/mybots` → бот → Bot Settings → Configure Mini App → Enable → URL деплоя.
+3. Bot Settings → Menu Button → тот же URL.
+
+## Структура
+
+- `src/data/topics.ts` — вопросы и шаблоны ответов
+- `src/data/profile.ts` — анкета и варианты выбора с греческими формами
+- `src/data/vocab.ts` — словарь
+- `src/lib/grammar.ts` — падежи городов/стран, даты, числа
+- `src/lib/srs.ts` — интервальное повторение
+- `src/lib/tts.ts`, `api/tts.ts` — озвучка
+- `src/lib/telegram.ts`, `src/sync.ts` — Telegram SDK и синхронизация

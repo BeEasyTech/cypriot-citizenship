@@ -199,11 +199,11 @@ export function TriLine({ line, idx, showEn, showRu, big, speakPrefix = 'ans' }:
 
 export function Toggle({ on, onChange, label }: { on: boolean; onChange: (v: boolean) => void; label?: ReactNode }) {
   return (
-    <button onClick={() => { haptic.select(); onChange(!on) }} className="flex items-center gap-2" role="switch" aria-checked={on}>
-      <span className={cx('relative inline-block h-[30px] w-[50px] rounded-full transition', on ? 'bg-ok' : 'bg-line')}>
+    <button onClick={() => { haptic.select(); onChange(!on) }} className={cx('flex items-center gap-3 text-left', !!label && 'w-full')} role="switch" aria-checked={on}>
+      <span className={cx('relative inline-block h-[30px] w-[50px] shrink-0 rounded-full transition', on ? 'bg-ok' : 'bg-line')}>
         <span className={cx('absolute top-[3px] h-6 w-6 rounded-full bg-white shadow transition-all', on ? 'left-[23px]' : 'left-[3px]')} />
       </span>
-      {label && <span className="text-[15px]">{label}</span>}
+      {label && <span className="min-w-0 flex-1 text-[15px] leading-snug">{label}</span>}
     </button>
   )
 }

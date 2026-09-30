@@ -38,7 +38,7 @@ export function Screen({ title, subtitle, right, children, back = true, footer }
   return (
     <div className="mx-auto flex min-h-dvh w-full max-w-xl flex-col fade-in">
       {(title || right) && (
-        <header className="safe-top sticky top-0 z-20 bg-bg/90 backdrop-blur-md">
+        <header className="safe-top sticky top-0 z-20 bg-bg/90 backdrop-blur-md print:hidden">
           <div className="flex min-h-14 items-center gap-1 px-4">
             {showBack && !inTg && (
               <button onClick={goBack} className="-ml-2 flex h-10 w-10 items-center justify-center rounded-full text-accent active:bg-accent-soft" aria-label="Назад">
@@ -53,7 +53,7 @@ export function Screen({ title, subtitle, right, children, back = true, footer }
           </div>
         </header>
       )}
-      <main className="flex-1 px-4 pb-28">{children}</main>
+      <main className="flex-1 px-4 pb-28 print:p-0">{children}</main>
       {footer}
     </div>
   )

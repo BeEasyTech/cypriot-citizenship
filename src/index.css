@@ -131,3 +131,22 @@ textarea { resize: vertical; min-height: 64px; }
 
 .no-scrollbar::-webkit-scrollbar { display: none; }
 .no-scrollbar { scrollbar-width: none; }
+
+/* Печать шпаргалки: светлая тема, две колонки, компактно. */
+@media print {
+  :root, :root:not([data-theme='light']), :root[data-theme='dark'] {
+    --bg: #fff; --card: #fff; --text: #000; --muted: #555; --accent: #0b4fb3; --copper: #8a4a12;
+    --border: #ccc; --shadow: none; color-scheme: light;
+  }
+  @page { margin: 8mm; }
+  *, *::before, *::after { animation: none !important; transition: none !important; }
+  html, body { background: #fff !important; }
+  .cheat { columns: 2; column-gap: 14px; font-size: 7.6pt; line-height: 1.22; }
+  .cheat h2 { column-span: all; margin-bottom: 4px !important; }
+  .cheat-topic { margin-bottom: 4px !important; }
+  .cheat-topic h3 { break-after: avoid; font-size: 7.4pt !important; margin-bottom: 1px !important; }
+  .cheat-item { break-inside: avoid; margin-bottom: 3px !important; }
+  .cheat .gr, .cheat div { font-size: inherit !important; line-height: inherit !important; }
+  .cheat .text-accent { font-size: 7.2pt !important; }
+  .cheat .hole { padding: 0 0.25em; line-height: 1.2; }
+}

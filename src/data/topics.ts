@@ -7,6 +7,7 @@ import {
 import {
   BENEFITS, CHURCH_FREQ, FOODS, GREEK_WHERE, HOBBIES, HOUSE_TYPE, JOB_DUTIES, JOBS, LANGUAGES, LIKE_CY,
   MET_PLACES, MONEY_SOURCES, MOVE_REASONS, PASSPORT_REASONS, RELIGION, SCHOOLS, type Child,
+  DISLIKES, FAV_PLACES, MISS, NEARBY, PERMITS, SEASONS, TRIP_WHY, VISIT_HOME,
 } from './profile'
 
 export interface QItem {
@@ -1341,6 +1342,380 @@ export const TOPICS: Topic[] = [
           hasKids(c)
             ? t('Θέλω τα παιδιά μου να μεγαλώσουν στην Κύπρο.', 'I want my children to grow up in Cyprus.', 'Хочу, чтобы мои дети выросли на Кипре.')
             : t('Θέλω να ζήσω όλη μου τη ζωή στην Κύπρο.', 'I want to live my whole life in Cyprus.', 'Хочу прожить всю жизнь на Кипре.'),
+        ],
+      },
+    ],
+  },
+  {
+    id: 't29', num: 29, title: 'Поездки и документы', emoji: '✈️',
+    items: [
+      {
+        id: 'x-permit', title: 'Какой у вас вид на жительство?', fields: ['permitType', 'permitSince'],
+        questions: Q(
+          t('Τι άδεια διαμονής έχετε;', 'What residence permit do you have?', 'Какой у вас вид на жительство?'),
+          t('Από πότε έχετε άδεια διαμονής;', 'Since when have you had a residence permit?', 'С какого времени у вас вид на жительство?'),
+        ),
+        answer: (c) => {
+          const pm = c.pick(PERMITS, 'permitType')
+          const out = [pm ? c.gt(pm.t) : triAll(hole('Вид на жительство'))]
+          if (c.num('permitSince')) {
+            const y = c.year('permitSince', 'Год')
+            out.push(t(`Την έχω από το ${y.gr}.`, `I have had it since ${y.en}.`, `Он у меня с ${y.ru} года.`))
+          }
+          return out
+        },
+      },
+      {
+        id: 'x-application', title: 'Когда вы подали заявление?', fields: ['applicationDate'],
+        questions: Q(
+          t('Πότε κάνατε την αίτηση για πολιτογράφηση;', 'When did you apply for naturalisation?', 'Когда вы подали заявление на натурализацию?'),
+          t('Πότε υποβάλατε την αίτησή σας;', 'When did you submit your application?', 'Когда вы подали заявление?'),
+        ),
+        answer: (c) => {
+          const m = c.month('applicationDate', 'Дата заявления')
+          return [t(`Έκανα την αίτηση ${m.gr}.`, `I applied ${m.en}.`, `Я ${c.g('подал', 'подала')} заявление ${m.ru}.`)]
+        },
+      },
+      {
+        id: 'x-travel-often', title: 'Как часто вы выезжаете с Кипра?', fields: ['tripsPerYear'],
+        questions: Q(
+          t('Πόσο συχνά ταξιδεύετε εκτός Κύπρου;', 'How often do you travel outside Cyprus?', 'Как часто вы выезжаете с Кипра?'),
+          t('Ταξιδεύετε συχνά στο εξωτερικό;', 'Do you often travel abroad?', 'Вы часто ездите за границу?'),
+        ),
+        answer: (c) => {
+          const n = c.num('tripsPerYear')
+          const out: Tri[] = []
+          if (n === undefined) out.push(triAll(hole('Поездок в год')))
+          else if (n === 0) out.push(t('Σχεδόν ποτέ. Μένω στην Κύπρο όλο τον χρόνο.', 'Almost never. I stay in Cyprus all year.', 'Почти никогда. Я весь год на Кипре.'))
+          else if (n === 1) out.push(t('Ταξιδεύω μία φορά τον χρόνο, συνήθως για λίγες μέρες.', 'I travel once a year, usually for a few days.', 'Езжу раз в год, обычно на несколько дней.'))
+          else out.push(t(`Ταξιδεύω περίπου ${n} φορές τον χρόνο, για λίγες μέρες κάθε φορά.`, `I travel about ${n} times a year, for a few days each time.`, `Езжу примерно ${n} ${ruPlural(n, 'раз', 'раза', 'раз')} в год, каждый раз на несколько дней.`))
+          out.push(t('Πάντα γυρίζω γρήγορα, γιατί η ζωή μου είναι εδώ.', 'I always come back quickly, because my life is here.', 'Я всегда быстро возвращаюсь, потому что моя жизнь здесь.'))
+          return out
+        },
+      },
+      {
+        id: 'x-days-abroad', title: 'Сколько дней вы отсутствовали?', fields: ['daysAbroad'],
+        questions: Q(
+          t('Πόσες μέρες λείψατε από την Κύπρο πέρσι;', 'How many days were you away from Cyprus last year?', 'Сколько дней вас не было на Кипре в прошлом году?'),
+          t('Πόσο καιρό λείψατε από την Κύπρο τον τελευταίο χρόνο;', 'How long were you away from Cyprus in the last year?', 'Как долго вы отсутствовали на Кипре за последний год?'),
+        ),
+        answer: (c) => {
+          const n = c.num('daysAbroad')
+          if (n === undefined) return [triAll(hole('Дней вне Кипра'))]
+          if (n === 0) return [t('Πέρσι δεν έλειψα καθόλου. Ήμουν όλο τον χρόνο στην Κύπρο.', 'Last year I was not away at all. I was in Cyprus all year.', 'В прошлом году я никуда не уезжал(а). Весь год был(а) на Кипре.')]
+          return [
+            t(`Πέρσι έλειψα περίπου ${n} μέρες.`, `Last year I was away for about ${n} days.`, `В прошлом году меня не было примерно ${n} ${ruPlural(n, 'день', 'дня', 'дней')}.`),
+            t('Τον υπόλοιπο χρόνο ήμουν εδώ, στην Κύπρο.', 'The rest of the year I was here, in Cyprus.', 'Остальное время я был(а) здесь, на Кипре.'),
+          ]
+        },
+      },
+      {
+        id: 'x-last-trip', title: 'Куда вы ездили в последний раз?', fields: ['lastTripPlace', 'lastTripDate', 'lastTripWhy'],
+        questions: Q(
+          t('Πού ταξιδέψατε τελευταία φορά;', 'Where did you travel last time?', 'Куда вы ездили в последний раз?'),
+          t('Πότε ήταν το τελευταίο σας ταξίδι;', 'When was your last trip?', 'Когда была ваша последняя поездка?'),
+        ),
+        answer: (c) => {
+          const pl = c.country('lastTripPlace', 'Куда ездили'), m = c.month('lastTripDate', 'Когда')
+          const w = c.pick(TRIP_WHY, 'lastTripWhy')
+          const why = w ? w.t : triAll('')
+          return [t(
+            `Το τελευταίο μου ταξίδι ήταν ${m.gr}, ${pl.in.gr}${why.gr ? `, ${why.gr}` : ''}.`,
+            `My last trip was ${m.en}, ${pl.in.en}${why.en ? `, ${why.en}` : ''}.`,
+            `Моя последняя поездка была ${m.ru}, ${pl.in.ru}${why.ru ? `, ${why.ru}` : ''}.`,
+          )]
+        },
+      },
+      {
+        id: 'x-visit-home', title: 'Ездите ли вы на родину?', fields: ['visitHome', 'country'],
+        questions: (c) => {
+          const co = c.country('country', 'Страна')
+          return [
+            t('Πηγαίνετε στη χώρα σας;', 'Do you go to your country?', 'Вы ездите на родину?'),
+            t(`Κάθε πότε πηγαίνετε ${co.in.gr};`, `How often do you go ${co.in.en.replace(/^in /, 'to ')}?`, `Как часто вы бываете ${co.in.ru}?`),
+          ]
+        },
+        answer: (c) => {
+          const v = c.pick(VISIT_HOME, 'visitHome')
+          return v ? [c.gt(v.t)] : [triAll(hole('Как часто'))]
+        },
+      },
+      {
+        id: 'x-holidays', title: 'Где вы проводите отпуск?',
+        questions: Q(
+          t('Πού κάνετε διακοπές;', 'Where do you go on holiday?', 'Где вы проводите отпуск?'),
+          t('Πού πήγατε διακοπές φέτος;', 'Where did you go on holiday this year?', 'Куда вы ездили в отпуск в этом году?'),
+        ),
+        answer: (c) => [
+          we(c,
+            t('Συνήθως κάνω διακοπές εδώ, στην Κύπρο. Πηγαίνω στην Πάφο ή στο Τρόοδος.', 'Usually I spend my holidays here, in Cyprus. I go to Paphos or Troodos.', 'Обычно я отдыхаю здесь, на Кипре: езжу в Пафос или Троодос.'),
+            t('Συνήθως κάνουμε διακοπές εδώ, στην Κύπρο. Πηγαίνουμε στην Πάφο ή στο Τρόοδος.', 'Usually we spend our holidays here, in Cyprus. We go to Paphos or Troodos.', 'Обычно мы отдыхаем здесь, на Кипре: ездим в Пафос или Троодос.'),
+          ),
+          t('Η Κύπρος έχει τόσα ωραία μέρη, δεν χρειάζεται να πάμε μακριά.', 'Cyprus has so many beautiful places, there is no need to go far.', 'На Кипре столько красивых мест, что не нужно ехать далеко.'),
+        ],
+      },
+      {
+        id: 'x-gesy', title: 'Есть ли медицинская страховка?', fields: ['gesy'],
+        questions: Q(
+          t('Έχετε ασφάλεια υγείας;', 'Do you have health insurance?', 'У вас есть медицинская страховка?'),
+          t('Είστε στο ΓεΣΥ; Έχετε προσωπικό γιατρό;', 'Are you in GeSY? Do you have a personal doctor?', 'Вы в ГеСИ? У вас есть личный врач?'),
+        ),
+        answer: (c) => c.p.gesy === false
+          ? [t('Έχω ιδιωτική ασφάλεια υγείας.', 'I have private health insurance.', 'У меня частная медицинская страховка.')]
+          : [t('Ναι, είμαι στο ΓεΣΥ και έχω προσωπικό γιατρό.', 'Yes, I am in GeSY and I have a personal doctor.', 'Да, я в системе ГеСИ, и у меня есть личный врач.')],
+      },
+      {
+        id: 'x-taxes', title: 'Платите ли вы налоги на Кипре?',
+        questions: Q(t('Πληρώνετε φόρους στην Κύπρο;', 'Do you pay taxes in Cyprus?', 'Вы платите налоги на Кипре?')),
+        answer: (c) => [
+          t('Ναι, είμαι φορολογικός κάτοικος Κύπρου και κάνω φορολογική δήλωση κάθε χρόνο.', 'Yes, I am a tax resident of Cyprus and I file a tax return every year.', 'Да, я налоговый резидент Кипра и каждый год подаю декларацию.'),
+          ...(isWorking(c) ? [t('Πληρώνω φόρο εισοδήματος και κοινωνικές ασφαλίσεις.', 'I pay income tax and social insurance.', 'Плачу подоходный налог и соцстрахование.')] : []),
+        ],
+      },
+      {
+        id: 'x-car', title: 'У вас есть машина и права?', fields: ['hasCar', 'cyLicense'],
+        questions: Q(
+          t('Έχετε αυτοκίνητο;', 'Do you have a car?', 'У вас есть машина?'),
+          t('Έχετε κυπριακό δίπλωμα οδήγησης;', 'Do you have a Cypriot driving licence?', 'У вас есть кипрские водительские права?'),
+        ),
+        answer: (c) => {
+          if (c.p.hasCar === false) return [t('Όχι, δεν έχω αυτοκίνητο. Χρησιμοποιώ λεωφορείο ή ταξί.', 'No, I don\'t have a car. I use the bus or a taxi.', 'Нет, машины у меня нет. Езжу на автобусе или такси.')]
+          return [
+            t('Ναι, έχω αυτοκίνητο.', 'Yes, I have a car.', 'Да, у меня есть машина.'),
+            c.p.cyLicense === false
+              ? t('Οδηγώ με δίπλωμα από τη χώρα μου.', 'I drive with a licence from my country.', 'Езжу по правам своей страны.')
+              : t('Έχω κυπριακό δίπλωμα οδήγησης.', 'I have a Cypriot driving licence.', 'У меня кипрские водительские права.'),
+          ]
+        },
+      },
+    ],
+  },
+  {
+    id: 't30', num: 30, title: 'Мнение и «неудобные» вопросы', emoji: '🤔',
+    items: [
+      {
+        id: 'x-dislike', title: 'Что вам не нравится на Кипре?', fields: ['dislikes'],
+        questions: Q(t('Τι δεν σας αρέσει στην Κύπρο;', 'What don\'t you like about Cyprus?', 'Что вам не нравится на Кипре?')),
+        answer: (c) => [
+          t('Δεν υπάρχουν πολλά πράγματα που δεν μου αρέσουν.', 'There aren\'t many things I don\'t like.', 'Вещей, которые мне не нравятся, немного.'),
+          ...c.picks(DISLIKES, 'dislikes').slice(0, 2).map((d) => c.gt(d.t)),
+          t('Αλλά αυτά είναι μικρά πράγματα. Η Κύπρος μου αρέσει πολύ!', 'But these are small things. I like Cyprus very much!', 'Но это мелочи. Кипр мне очень нравится!'),
+        ],
+      },
+      {
+        id: 'x-miss', title: 'По чему вы скучаете?', fields: ['miss'],
+        questions: Q(t('Τι σας λείπει από τη χώρα σας;', 'What do you miss from your country?', 'По чему вы скучаете с родины?')),
+        answer: (c) => [
+          ...c.picks(MISS, 'miss').map((m) => c.gt(m.t)),
+          t('Αλλά τώρα το σπίτι μου είναι εδώ.', 'But now my home is here.', 'Но теперь мой дом здесь.'),
+        ],
+      },
+      {
+        id: 'x-diff', title: 'Чем Кипр отличается от вашей страны?',
+        questions: Q(
+          t('Ποια είναι η διαφορά ανάμεσα στην Κύπρο και τη χώρα σας;', 'What is the difference between Cyprus and your country?', 'Чем Кипр отличается от вашей страны?'),
+          t('Τι είναι διαφορετικό εδώ;', 'What is different here?', 'Что здесь по-другому?'),
+        ),
+        answer: () => [
+          t('Η Κύπρος είναι μικρή χώρα και η ζωή είναι πιο ήρεμη.', 'Cyprus is a small country and life is calmer.', 'Кипр — маленькая страна, и жизнь здесь спокойнее.'),
+          t('Οι άνθρωποι εδώ είναι πιο ανοιχτοί και φιλικοί.', 'People here are more open and friendly.', 'Люди здесь более открытые и дружелюбные.'),
+          t('Το κλίμα είναι πολύ πιο ζεστό.', 'The climate is much warmer.', 'Климат намного теплее.'),
+          t('Και εδώ η οικογένεια είναι πολύ σημαντική.', 'And here family is very important.', 'И здесь семья очень важна.'),
+        ],
+      },
+      {
+        id: 'x-cyprus-problem', title: 'Что вы знаете о кипрской проблеме?',
+        questions: Q(
+          t('Τι ξέρετε για το Κυπριακό πρόβλημα;', 'What do you know about the Cyprus problem?', 'Что вы знаете о кипрской проблеме?'),
+          t('Τι έγινε στην Κύπρο το 1974;', 'What happened in Cyprus in 1974?', 'Что произошло на Кипре в 1974 году?'),
+        ),
+        answer: () => [
+          t('Το 1974 έγινε η τουρκική εισβολή και από τότε η Κύπρος είναι μοιρασμένη.', 'In 1974 there was the Turkish invasion and since then Cyprus has been divided.', 'В 1974 году произошло турецкое вторжение, и с тех пор Кипр разделён.'),
+          t('Το βόρειο μέρος του νησιού είναι κατεχόμενο.', 'The northern part of the island is occupied.', 'Северная часть острова оккупирована.'),
+          t('Η Λευκωσία είναι η τελευταία μοιρασμένη πρωτεύουσα στην Ευρώπη.', 'Nicosia is the last divided capital in Europe.', 'Никосия — последняя разделённая столица в Европе.'),
+          t('Ελπίζω να βρεθεί μια δίκαιη λύση και η Κύπρος να ενωθεί ξανά.', 'I hope a fair solution will be found and Cyprus will be united again.', 'Надеюсь, будет найдено справедливое решение и Кипр снова объединится.'),
+        ],
+      },
+      {
+        id: 'x-why-not-back', title: 'Почему не возвращаетесь на родину?',
+        questions: Q(
+          t('Γιατί δεν γυρίζετε πίσω στη χώρα σας;', 'Why don\'t you go back to your country?', 'Почему вы не возвращаетесь на родину?'),
+          t('Γιατί θέλετε να ζήσετε στην Κύπρο και όχι στη χώρα σας;', 'Why do you want to live in Cyprus and not in your country?', 'Почему вы хотите жить на Кипре, а не на родине?'),
+        ),
+        answer: (c) => [
+          t('Γιατί η ζωή μου τώρα είναι εδώ.', 'Because my life is here now.', 'Потому что теперь моя жизнь здесь.'),
+          we(c,
+            t('Εδώ είναι η δουλειά μου, το σπίτι μου και οι φίλοι μου.', 'My work, my home and my friends are here.', 'Здесь моя работа, мой дом и мои друзья.'),
+            t('Εδώ είναι η οικογένειά μου, η δουλειά μου και οι φίλοι μου.', 'My family, my work and my friends are here.', 'Здесь моя семья, моя работа и мои друзья.'),
+          ),
+          t('Εδώ νιώθω ασφάλεια και ηρεμία.', 'Here I feel safe and calm.', 'Здесь я чувствую себя в безопасности и спокойно.'),
+        ],
+      },
+      {
+        id: 'x-integration', title: 'Как вы интегрируетесь в общество?',
+        questions: Q(
+          t('Τι κάνετε για να ενταχθείτε στην κυπριακή κοινωνία;', 'What do you do to integrate into Cypriot society?', 'Что вы делаете, чтобы интегрироваться в кипрское общество?'),
+          t('Πώς νιώθετε στην Κύπρο; Νιώθετε ότι ανήκετε εδώ;', 'How do you feel in Cyprus? Do you feel you belong here?', 'Как вы себя чувствуете на Кипре? Чувствуете, что вы здесь свой?'),
+        ),
+        answer: () => [
+          t('Μαθαίνω ελληνικά και προσπαθώ να μιλάω ελληνικά κάθε μέρα.', 'I am learning Greek and I try to speak Greek every day.', 'Я учу греческий и стараюсь говорить на нём каждый день.'),
+          t('Έχω Κύπριους φίλους και γιορτάζω μαζί τους τις γιορτές.', 'I have Cypriot friends and I celebrate the holidays with them.', 'У меня есть друзья-киприоты, и я праздную с ними праздники.'),
+          t('Ψωνίζω σε τοπικά μαγαζιά και πηγαίνω στα πανηγύρια.', 'I shop in local shops and go to the village fairs.', 'Хожу в местные магазины и на праздничные ярмарки.'),
+          t('Νιώθω ότι ανήκω εδώ.', 'I feel that I belong here.', 'Я чувствую, что я здесь свой(-я).'),
+        ],
+      },
+      {
+        id: 'x-news', title: 'Следите за новостями Кипра?',
+        questions: Q(
+          t('Διαβάζετε ειδήσεις για την Κύπρο;', 'Do you read news about Cyprus?', 'Вы читаете новости о Кипре?'),
+          t('Σας ενδιαφέρει η πολιτική; Θα ψηφίζετε;', 'Are you interested in politics? Will you vote?', 'Вам интересна политика? Будете голосовать?'),
+        ),
+        answer: () => [
+          t('Ναι, διαβάζω τα νέα στο ίντερνετ και μερικές φορές βλέπω ειδήσεις στην τηλεόραση, στο ΡΙΚ.', 'Yes, I read the news online and sometimes watch the news on TV, on CyBC.', 'Да, читаю новости в интернете и иногда смотрю новости по телевизору, на РИК.'),
+          t('Όταν πάρω το διαβατήριο, θα ψηφίζω σε όλες τις εκλογές.', 'When I get the passport, I will vote in all elections.', 'Когда получу паспорт, буду голосовать на всех выборах.'),
+        ],
+      },
+    ],
+  },
+  {
+    id: 't31', num: 31, title: 'Быт и что нравится делать', emoji: '🏡',
+    items: [
+      {
+        id: 'x-nearby', title: 'Что есть рядом с вашим домом?', fields: ['nearby'],
+        questions: Q(
+          t('Τι υπάρχει κοντά στο σπίτι σας;', 'What is there near your home?', 'Что есть рядом с вашим домом?'),
+          t('Πώς είναι η γειτονιά σας;', 'What is your neighbourhood like?', 'Какой у вас район?'),
+        ),
+        answer: (c) => {
+          const xs = c.picks(NEARBY, 'nearby')
+          const sea = xs.some((x) => x.value === 'sea')
+          const rest = xs.filter((x) => x.value !== 'sea').map((x) => x.t)
+          const out: Tri[] = []
+          if (rest.length) {
+            const j = joinTri(rest)
+            out.push(t(`Κοντά στο σπίτι μου έχει ${j.gr}.`, `Near my home there is ${j.en}.`, `Рядом с домом есть ${j.ru}.`))
+          }
+          if (sea) out.push(t('Η θάλασσα είναι πολύ κοντά, δέκα λεπτά με τα πόδια.', 'The sea is very close, ten minutes on foot.', 'Море совсем рядом, десять минут пешком.'))
+          out.push(t('Η γειτονιά μας είναι ήσυχη και ασφαλής.', 'Our neighbourhood is quiet and safe.', 'Наш район тихий и безопасный.'))
+          return out
+        },
+      },
+      {
+        id: 'x-neighbours', title: 'Вы знаете своих соседей?',
+        questions: Q(t('Ξέρετε τους γείτονές σας;', 'Do you know your neighbours?', 'Вы знаете своих соседей?')),
+        answer: () => [
+          t('Ναι, έχουμε πολύ καλές σχέσεις με τους γείτονες.', 'Yes, we have very good relations with the neighbours.', 'Да, у нас очень хорошие отношения с соседями.'),
+          t('Είναι Κύπριοι και μας βοηθάνε όταν χρειαζόμαστε κάτι.', 'They are Cypriots and they help us when we need something.', 'Они киприоты и помогают, когда нам что-то нужно.'),
+        ],
+      },
+      {
+        id: 'x-fav-place', title: 'Любимое место на Кипре?', fields: ['favPlace'],
+        questions: Q(
+          t('Ποιο είναι το αγαπημένο σας μέρος στην Κύπρο;', 'What is your favourite place in Cyprus?', 'Какое ваше любимое место на Кипре?'),
+          t('Πού σας αρέσει να πηγαίνετε στην Κύπρο;', 'Where do you like to go in Cyprus?', 'Куда вы любите ездить на Кипре?'),
+        ),
+        answer: (c) => {
+          const f = c.pick(FAV_PLACES, 'favPlace')
+          if (!f) return [triAll(hole('Любимое место'))]
+          const n = f.t.name
+          return [t(`Το αγαπημένο μου μέρος είναι ${n.gr}.`, `My favourite place is ${n.en}.`, `Моё любимое место — ${n.ru}.`), c.gt(f.t.why)]
+        },
+      },
+      {
+        id: 'x-season', title: 'Какое время года вам нравится?', fields: ['season'],
+        questions: Q(
+          t('Ποια εποχή σας αρέσει;', 'Which season do you like?', 'Какое время года вам нравится?'),
+          t('Σας αρέσει ο καιρός στην Κύπρο;', 'Do you like the weather in Cyprus?', 'Вам нравится погода на Кипре?'),
+        ),
+        answer: (c) => {
+          const s = c.pick(SEASONS, 'season')
+          return [
+            ...(s ? [c.gt(s.t)] : [triAll(hole('Время года'))]),
+            t('Γενικά ο καιρός στην Κύπρο είναι υπέροχος.', 'In general the weather in Cyprus is wonderful.', 'Вообще погода на Кипре прекрасная.'),
+          ]
+        },
+      },
+      {
+        id: 'x-weekend-like', title: 'Что вы любите делать в выходные?', fields: ['hobbies', 'favPlace'],
+        questions: Q(
+          t('Τι σας αρέσει να κάνετε τα Σαββατοκύριακα;', 'What do you like to do at weekends?', 'Что вы любите делать по выходным?'),
+          t('Τι σας αρέσει να κάνετε;', 'What do you like doing?', 'Что вам нравится делать?'),
+        ),
+        answer: (c) => {
+          const hs = c.picks(HOBBIES, 'hobbies').slice(0, 2).map((h) => c.gt(h.t.verb))
+          const out: Tri[] = []
+          if (hs.length) {
+            const j = joinTri(hs)
+            out.push(t(`Τα Σαββατοκύριακα ${j.gr}.`, `At weekends ${j.en}.`, `По выходным я ${j.ru}.`))
+          }
+          out.push(we(c,
+            t('Μου αρέσει να πηγαίνω σε ένα χωριό και να τρώω σε μια ταβέρνα.', 'I like going to a village and eating at a tavern.', 'Люблю съездить в деревню и поесть в таверне.'),
+            t('Μας αρέσει να πηγαίνουμε σε ένα χωριό και να τρώμε σε μια ταβέρνα.', 'We like going to a village and eating at a tavern.', 'Мы любим съездить в деревню и поесть в таверне.'),
+          ))
+          out.push(t('Μου αρέσει επίσης να βλέπω φίλους και να πίνω καφέ δίπλα στη θάλασσα.', 'I also like meeting friends and having coffee by the sea.', 'Ещё люблю встречаться с друзьями и пить кофе у моря.'))
+          return out
+        },
+      },
+      {
+        id: 'x-cook', title: 'Вы готовите? Что?', fields: ['foods'],
+        questions: Q(
+          t('Μαγειρεύετε;', 'Do you cook?', 'Вы готовите?'),
+          t('Τι σας αρέσει να μαγειρεύετε;', 'What do you like to cook?', 'Что вы любите готовить?'),
+        ),
+        answer: (c) => {
+          const f = c.picks(FOODS, 'foods')[0]
+          return [
+            t('Ναι, μαγειρεύω σχεδόν κάθε μέρα.', 'Yes, I cook almost every day.', 'Да, готовлю почти каждый день.'),
+            f
+              ? t(`Μαγειρεύω φαγητά από τη χώρα μου, αλλά και κυπριακά, όπως ${f.t.acc}.`, `I cook food from my country, but also Cypriot dishes, like ${f.t.nom.en}.`, `Готовлю блюда своей страны, но и кипрские, например ${f.t.nom.ru}.`)
+              : t('Μαγειρεύω φαγητά από τη χώρα μου, αλλά και κυπριακά.', 'I cook food from my country, but also Cypriot dishes.', 'Готовлю блюда своей страны, но и кипрские.'),
+          ]
+        },
+      },
+      {
+        id: 'x-shopping', title: 'Где вы делаете покупки?',
+        questions: Q(t('Πού ψωνίζετε;', 'Where do you do your shopping?', 'Где вы делаете покупки?')),
+        answer: () => [
+          t('Συνήθως ψωνίζω στο σούπερ μάρκετ κοντά στο σπίτι.', 'I usually shop at the supermarket near my home.', 'Обычно покупаю продукты в супермаркете рядом с домом.'),
+          t('Το Σάββατο πηγαίνω στη λαϊκή αγορά για φρέσκα φρούτα και λαχανικά.', 'On Saturday I go to the farmers\' market for fresh fruit and vegetables.', 'В субботу хожу на рынок за свежими фруктами и овощами.'),
+        ],
+      },
+      {
+        id: 'x-pet', title: 'У вас есть домашнее животное?', fields: ['pet', 'petName'],
+        questions: Q(t('Έχετε κατοικίδιο;', 'Do you have a pet?', 'У вас есть домашнее животное?')),
+        answer: (c) => {
+          const name = typeof c.p.petName === 'string' ? c.p.petName.trim() : ''
+          if (c.p.pet === 'dog') return [
+            t('Ναι, έχω έναν σκύλο.', 'Yes, I have a dog.', 'Да, у меня есть собака.'),
+            ...(name ? [t(`Τον λένε ${name}.`, `His name is ${name}.`, `Его зовут ${name}.`)] : []),
+            t('Τον βγάζω βόλτα κάθε πρωί και κάθε βράδυ.', 'I walk him every morning and every evening.', 'Гуляю с ним каждое утро и каждый вечер.'),
+          ]
+          if (c.p.pet === 'cat') return [
+            t('Ναι, έχω μια γάτα.', 'Yes, I have a cat.', 'Да, у меня есть кошка.'),
+            ...(name ? [t(`Τη λένε ${name}.`, `Her name is ${name}.`, `Её зовут ${name}.`)] : []),
+          ]
+          return [t('Όχι, δεν έχω κατοικίδιο.', 'No, I don\'t have a pet.', 'Нет, домашних животных у меня нет.')]
+        },
+      },
+      {
+        id: 'x-weekend-plan', title: 'Что будете делать в выходные?',
+        questions: Q(t('Τι θα κάνετε αυτό το Σαββατοκύριακο;', 'What will you do this weekend?', 'Что вы будете делать в эти выходные?')),
+        answer: (c) => [
+          we(c,
+            t('Το Σάββατο θα πάω στη θάλασσα με φίλους.', 'On Saturday I will go to the sea with friends.', 'В субботу поеду на море с друзьями.'),
+            t('Το Σάββατο θα πάμε με την οικογένεια στη θάλασσα.', 'On Saturday we will go to the sea with the family.', 'В субботу мы с семьёй поедем на море.'),
+          ),
+          t('Την Κυριακή θα μαγειρέψω και θα ξεκουραστώ.', 'On Sunday I will cook and rest.', 'В воскресенье буду готовить и отдыхать.'),
+        ],
+      },
+      {
+        id: 'x-yesterday', title: 'Что вы делали вчера?',
+        questions: Q(t('Τι κάνατε χθες;', 'What did you do yesterday?', 'Что вы делали вчера?')),
+        answer: (c) => [
+          isWorking(c)
+            ? t('Χθες δούλεψα όλη μέρα.', 'Yesterday I worked all day.', 'Вчера я работал(а) весь день.')
+            : t('Χθες το πρωί έκανα δουλειές στο σπίτι και ψώνισα.', 'Yesterday morning I did housework and went shopping.', 'Вчера утром занимался(-лась) домом и ходил(а) в магазин.'),
+          t('Το βράδυ μαγείρεψα, διάβασα λίγο ελληνικά και είδα μια ταινία.', 'In the evening I cooked, read a little Greek and watched a film.', 'Вечером готовил(а), немного читал(а) по-гречески и посмотрел(а) фильм.'),
         ],
       },
     ],

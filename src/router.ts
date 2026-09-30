@@ -14,6 +14,7 @@ export type Route =
   | { name: 'session'; filter?: SessionFilter; title?: string }
   | { name: 'sim' }
   | { name: 'listen' }
+  | { name: 'cheat' }
 
 interface Nav {
   stack: Route[]
@@ -25,7 +26,10 @@ interface Nav {
 
 /** Простая навигация стеком + синхронизация с кнопкой «назад» браузера/Telegram. */
 export const useNav = create<Nav>((set, get) => ({
-  stack: [{ name: 'home' }],
+  // ?open=cheat — прямая ссылка на шпаргалку
+  stack: typeof location !== 'undefined' && new URLSearchParams(location.search).get('open') === 'cheat'
+    ? [{ name: 'topics' }, { name: 'cheat' }]
+    : [{ name: 'home' }],
   push: (r) => {
     history.pushState({ depth: get().stack.length }, '')
     set((s) => ({ stack: [...s.stack, r] }))

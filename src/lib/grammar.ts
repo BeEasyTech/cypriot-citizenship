@@ -25,7 +25,7 @@ export interface KnownPlace {
 const P = (id: string, acc: string, en: string, ru: [string, string, string], nom?: string): KnownPlace => ({ id, acc, en, ru, nom })
 
 /** Название без артикля в именительном падеже: «Λεμεσός». */
-export const placeNom = (p: KnownPlace) => p.nom ?? p.acc.replace(/^(?:τη|την|το|τον)\s+/, '')
+export const placeNom = (p: KnownPlace) => p.nom ?? p.acc.replace(/^(?:τη|την|το|τον|τα)\s+/, '')
 
 export const COUNTRIES: KnownPlace[] = [
   P('ru', 'τη Ρωσία', 'Russia', ['Россия', 'в России', 'из России']),
@@ -44,6 +44,25 @@ export const COUNTRIES: KnownPlace[] = [
   P('ee', 'την Εσθονία', 'Estonia', ['Эстония', 'в Эстонии', 'из Эстонии']),
   P('cy', 'την Κύπρο', 'Cyprus', ['Кипр', 'на Кипре', 'с Кипра'], 'Κύπρος'),
 ]
+
+/** Популярные направления поездок (для вопросов о путешествиях). */
+export const DESTINATIONS: KnownPlace[] = [
+  P('gr', 'την Ελλάδα', 'Greece', ['Греция', 'в Греции', 'из Греции']),
+  P('it', 'την Ιταλία', 'Italy', ['Италия', 'в Италии', 'из Италии']),
+  P('es', 'την Ισπανία', 'Spain', ['Испания', 'в Испании', 'из Испании']),
+  P('fr', 'τη Γαλλία', 'France', ['Франция', 'во Франции', 'из Франции']),
+  P('de', 'τη Γερμανία', 'Germany', ['Германия', 'в Германии', 'из Германии']),
+  P('at', 'την Αυστρία', 'Austria', ['Австрия', 'в Австрии', 'из Австрии']),
+  P('pt', 'την Πορτογαλία', 'Portugal', ['Португалия', 'в Португалии', 'из Португалии']),
+  P('uk', 'την Αγγλία', 'England', ['Англия', 'в Англии', 'из Англии']),
+  P('me', 'το Μαυροβούνιο', 'Montenegro', ['Черногория', 'в Черногории', 'из Черногории']),
+  P('rs', 'τη Σερβία', 'Serbia', ['Сербия', 'в Сербии', 'из Сербии']),
+  P('ae', 'τα Ηνωμένα Αραβικά Εμιράτα', 'the United Arab Emirates', ['ОАЭ', 'в ОАЭ', 'из ОАЭ']),
+  P('eg', 'την Αίγυπτο', 'Egypt', ['Египет', 'в Египте', 'из Египта'], 'Αίγυπτος'),
+  P('th', 'την Ταϊλάνδη', 'Thailand', ['Таиланд', 'в Таиланде', 'из Таиланда']),
+]
+
+export const ALL_COUNTRIES: KnownPlace[] = [...COUNTRIES, ...DESTINATIONS]
 
 export const CITIES: KnownPlace[] = [
   P('moscow', 'τη Μόσχα', 'Moscow', ['Москва', 'в Москве', 'из Москвы']),

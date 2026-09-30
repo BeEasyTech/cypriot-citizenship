@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react'
-import { ChevronRight, Search, AlertCircle, Play, Pencil, Plus, SlidersHorizontal, ChevronDown } from 'lucide-react'
+import { ChevronRight, Search, AlertCircle, Play, Pencil, Plus, SlidersHorizontal, ChevronDown, FileText } from 'lucide-react'
 import { useStore } from '../store'
 import { useNav } from '../router'
 import { answerOf, isActive, isOverridden, qaCardId, topicMastery, useCtx, useTopics } from '../content'
@@ -23,7 +23,8 @@ export function TopicsList() {
   }, [q, topics, ctx])
 
   return (
-    <Screen title="Вопросы собеседования" subtitle={`${topics.length} тем · ${topics.reduce((a, t) => a + t.items.filter((i) => isActive(i, ctx)).length, 0)} вопросов`} back={false}>
+    <Screen title="Вопросы" subtitle={`${topics.length} тем · ${topics.reduce((a, t) => a + t.items.filter((i) => isActive(i, ctx)).length, 0)} вопросов`} back={false}
+      right={<button onClick={() => push({ name: 'cheat' })} className="flex min-h-10 items-center gap-1.5 rounded-full px-3 text-[14px] font-semibold text-accent active:bg-accent-soft" aria-label="Шпаргалка"><FileText size={18} /> Шпаргалка</button>}>
       <div className="relative mt-1">
         <Search size={18} className="absolute top-1/2 left-3 -translate-y-1/2 text-muted" />
         <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Поиск: «μισθός», «дети»…" className="!bg-card !pl-10" />

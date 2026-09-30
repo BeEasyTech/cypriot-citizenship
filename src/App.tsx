@@ -10,6 +10,7 @@ import { TopicsList, TopicDetail } from './screens/Topics'
 import { EditItem, NewItem } from './screens/EditItem'
 import { VocabList, DeckDetail } from './screens/Vocab'
 import { ProfileHome, SectionForm, Settings } from './screens/Profile'
+import Cheatsheet from './screens/Cheatsheet'
 
 const TABS: { id: Tab; label: string; icon: typeof HomeIcon }[] = [
   { id: 'home', label: 'Главная', icon: HomeIcon },
@@ -42,13 +43,14 @@ export default function App() {
     case 'session': screen = <Session filter={r.filter} title={r.title} />; break
     case 'sim': screen = <Sim />; break
     case 'listen': screen = <Listen />; break
+    case 'cheat': screen = <Cheatsheet />; break
   }
 
   return (
     <>
       <div key={key}>{screen}</div>
       {!FULLSCREEN.has(r.name) && (
-        <nav className="safe-bottom fixed inset-x-0 bottom-0 z-30 border-t border-line bg-card/95 backdrop-blur-md">
+        <nav className="safe-bottom fixed inset-x-0 bottom-0 z-30 print:hidden border-t border-line bg-card/95 backdrop-blur-md">
           <div className="mx-auto flex max-w-xl">
             {TABS.map((t) => {
               const on = root === t.id

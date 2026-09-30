@@ -1,5 +1,5 @@
 import type { Gender } from '../types'
-import { CITIES, COUNTRIES, type KnownPlace, type PlaceValue } from '../lib/grammar'
+import { CITIES, COUNTRIES, DESTINATIONS, type KnownPlace, type PlaceValue } from '../lib/grammar'
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export type Profile = Record<string, any>
@@ -280,6 +280,83 @@ export const WORK_MODE: Choice<null>[] = [
   c('hybrid', 'Гибрид', null),
 ]
 
+/* ------------------------------------------------ поездки, документы, быт */
+
+export const PERMITS: Choice[] = [
+  c('temp', 'Временный ВНЖ (pink slip)', g('Έχω άδεια προσωρινής διαμονής.', 'I have a temporary residence permit.', 'У меня временный вид на жительство.')),
+  c('work', 'ВНЖ с правом работы', g('Έχω άδεια διαμονής και εργασίας.', 'I have a residence and work permit.', 'У меня вид на жительство с правом работы.')),
+  c('permanent', 'ПМЖ (permanent residence)', g('Έχω άδεια μόνιμης διαμονής.', 'I have a permanent residence permit.', 'У меня постоянный вид на жительство.')),
+  c('eu', 'Гражданин ЕС (yellow slip)', g('Είμαι πολίτης της Ευρωπαϊκής Ένωσης και έχω βεβαίωση εγγραφής.', 'I am an EU citizen and I have a registration certificate.', 'Я гражданин(-ка) ЕС, у меня есть регистрационная справка.')),
+  c('family', 'Член семьи гражданина ЕС', g('Έχω κάρτα διαμονής μέλους οικογένειας πολίτη της Ένωσης.', 'I have a residence card as a family member of an EU citizen.', 'У меня карта резидента члена семьи гражданина ЕС.')),
+]
+
+export const VISIT_HOME: Choice[] = [
+  c('yearly', 'Раз в год', g('Πηγαίνω μία φορά τον χρόνο, για να δω τους γονείς μου.', 'I go once a year to see my parents.', 'Езжу раз в год, чтобы повидать родителей.')),
+  c('twice', 'Пару раз в год', g('Πηγαίνω δύο φορές τον χρόνο, για να δω την οικογένειά μου.', 'I go twice a year to see my family.', 'Езжу два раза в год, чтобы повидать семью.')),
+  c('rarely', 'Редко', g('Πηγαίνω πολύ σπάνια. Συνήθως οι γονείς μου έρχονται εδώ.', 'I go very rarely. Usually my parents come here.', 'Езжу очень редко. Обычно родители приезжают сюда.')),
+  c('never', 'Не езжу', g('Όχι, δεν έχω πάει από τότε που μετακόμισα.', 'No, I haven\'t been there since I moved.', 'Нет, не ездил(а) туда с тех пор, как переехал(а).')),
+]
+
+export const TRIP_WHY: Choice[] = [
+  c('holiday', 'Отпуск', g('για διακοπές', 'on holiday', 'в отпуске')),
+  c('family', 'Навестить семью', g('για να δω την οικογένειά μου', 'to see my family', 'в гостях у семьи')),
+  c('work', 'По работе', g('για δουλειά', 'for work', 'в командировке')),
+]
+
+export interface FavPlace { name: GTri; why: GTri }
+export const FAV_PLACES: Choice<FavPlace>[] = [
+  c('troodos', 'Троодос', { name: g('το Τρόοδος', 'Troodos', 'Троодос'), why: g('Μου αρέσει να περπατάω στο δάσος. Τον χειμώνα έχει και χιόνι.', 'I like walking in the forest. In winter there is even snow.', 'Люблю гулять по лесу. Зимой там бывает даже снег.') }),
+  c('akamas', 'Акамас', { name: g('ο Ακάμας', 'Akamas', 'Акамас'), why: g('Η φύση είναι άγρια και πανέμορφη και η θάλασσα είναι πεντακάθαρη.', 'The nature is wild and beautiful and the sea is crystal clear.', 'Природа дикая и красивая, а море кристально чистое.') }),
+  c('paphos', 'Пафос', { name: g('η Πάφος', 'Paphos', 'Пафос'), why: g('Έχει πολλή ιστορία, αρχαία μνημεία και ένα ωραίο λιμάνι.', 'It has a lot of history, ancient monuments and a nice harbour.', 'Там много истории, древние памятники и красивая гавань.') }),
+  c('lefkara', 'Лефкара', { name: g('τα Λεύκαρα', 'Lefkara', 'Лефкара'), why: g('Είναι ένα όμορφο παραδοσιακό χωριό, γνωστό για τις δαντέλες του.', 'It is a beautiful traditional village, famous for its lace.', 'Это красивая традиционная деревня, известная своим кружевом.') }),
+  c('omodos', 'Омодос', { name: g('το Όμοδος', 'Omodos', 'Омодос'), why: g('Είναι ένα γραφικό χωριό με καλό κρασί και ένα ωραίο μοναστήρι.', 'It is a picturesque village with good wine and a lovely monastery.', 'Это живописная деревня с хорошим вином и красивым монастырём.') }),
+  c('ayianapa', 'Айя-Напа', { name: g('η Αγία Νάπα', 'Ayia Napa', 'Айя-Напа'), why: g('Έχει τις πιο ωραίες παραλίες της Κύπρου.', 'It has the most beautiful beaches in Cyprus.', 'Там самые красивые пляжи Кипра.') }),
+  c('molos', 'Набережная Молос', { name: g('ο Μόλος στη Λεμεσό', 'the Molos promenade in Limassol', 'набережная Молос в Лимассоле'), why: g('Μου αρέσει να περπατάω δίπλα στη θάλασσα το βράδυ.', 'I like walking by the sea in the evening.', 'Люблю гулять вдоль моря вечером.') }),
+  c('kykkos', 'Монастырь Киккос', { name: g('το μοναστήρι του Κύκκου', 'Kykkos Monastery', 'монастырь Киккос'), why: g('Είναι το πιο γνωστό μοναστήρι της Κύπρου και είναι πολύ όμορφο.', 'It is the most famous monastery in Cyprus and it is very beautiful.', 'Это самый известный монастырь Кипра, и он очень красивый.') }),
+]
+
+export const SEASONS: Choice[] = [
+  c('spring', 'Весна', g('Μου αρέσει η άνοιξη, γιατί δεν κάνει πολλή ζέστη και όλα είναι πράσινα.', 'I like spring, because it is not too hot and everything is green.', 'Мне нравится весна: не слишком жарко и всё зелёное.')),
+  c('summer', 'Лето', g('Μου αρέσει το καλοκαίρι, γιατί κολυμπάω στη θάλασσα κάθε μέρα.', 'I like summer, because I swim in the sea every day.', 'Мне нравится лето: я каждый день плаваю в море.')),
+  c('autumn', 'Осень', g('Μου αρέσει το φθινόπωρο, γιατί ο καιρός είναι ζεστός, αλλά όχι πολύ.', 'I like autumn, because the weather is warm, but not too hot.', 'Мне нравится осень: тепло, но не жарко.')),
+  c('winter', 'Зима', g('Μου αρέσει ο χειμώνας στην Κύπρο, γιατί είναι ήπιος και μπορούμε να πάμε στο χιόνι στο Τρόοδος.', 'I like winter in Cyprus, because it is mild and we can go to the snow in Troodos.', 'Мне нравится зима на Кипре: она мягкая, и можно съездить на снег в Троодос.')),
+]
+
+export const PETS: Choice<null>[] = [
+  c('none', 'Нет', null),
+  c('dog', 'Собака', null),
+  c('cat', 'Кошка', null),
+]
+
+/** Что рядом с домом: винительный падеж для «Κοντά στο σπίτι μου έχει …». */
+export const NEARBY: Choice[] = [
+  c('sea', 'Море', g('η θάλασσα', 'the sea', 'море')),
+  c('supermarket', 'Супермаркет', g('ένα σούπερ μάρκετ', 'a supermarket', 'супермаркет')),
+  c('pharmacy', 'Аптека', g('ένα φαρμακείο', 'a pharmacy', 'аптека')),
+  c('park', 'Парк', g('ένα πάρκο', 'a park', 'парк')),
+  c('school', 'Школа', g('ένα σχολείο', 'a school', 'школа')),
+  c('church', 'Церковь', g('μια εκκλησία', 'a church', 'церковь')),
+  c('bakery', 'Пекарня', g('έναν φούρνο', 'a bakery', 'пекарня')),
+  c('cafes', 'Кафе', g('καφετέριες', 'cafés', 'кафе')),
+  c('gym', 'Спортзал', g('ένα γυμναστήριο', 'a gym', 'спортзал')),
+  c('bus', 'Остановка автобуса', g('μια στάση λεωφορείου', 'a bus stop', 'автобусная остановка')),
+]
+
+export const DISLIKES: Choice[] = [
+  c('heat', 'Летняя жара', g('Το καλοκαίρι κάνει πολλή ζέστη, ειδικά τον Αύγουστο.', 'In summer it is very hot, especially in August.', 'Летом очень жарко, особенно в августе.')),
+  c('traffic', 'Пробки', g('Το πρωί έχει πολλή κίνηση στους δρόμους.', 'In the morning there is a lot of traffic on the roads.', 'Утром на дорогах много машин.')),
+  c('transport', 'Мало автобусов', g('Τα λεωφορεία δεν είναι πολύ συχνά.', 'The buses are not very frequent.', 'Автобусы ходят нечасто.')),
+  c('prices', 'Дорогая аренда', g('Τα ενοίκια είναι αρκετά ακριβά.', 'Rents are quite expensive.', 'Аренда довольно дорогая.')),
+  c('humidity', 'Влажность', g('Η υγρασία το καλοκαίρι είναι δύσκολη.', 'The humidity in summer is hard.', 'Летом тяжело из-за влажности.')),
+]
+
+export const MISS: Choice[] = [
+  c('parents', 'Родители и старые друзья', g('Μου λείπουν οι γονείς μου και οι παλιοί μου φίλοι.', 'I miss my parents and my old friends.', 'Я скучаю по родителям и старым друзьям.')),
+  c('snow', 'Снег зимой', g('Μερικές φορές μου λείπει το χιόνι τον χειμώνα.', 'Sometimes I miss the snow in winter.', 'Иногда скучаю по снегу зимой.')),
+  c('food', 'Еда с родины', g('Μου λείπουν μερικά φαγητά από τη χώρα μου.', 'I miss some food from my country.', 'Скучаю по некоторым блюдам с родины.')),
+  c('nothing', 'Почти ничего', g('Για να είμαι ειλικρινής, δεν μου λείπουν πολλά πράγματα.', 'To be honest, I don\'t miss many things.', 'Если честно, скучаю по немногому.', 'Για να είμαι ειλικρινής, δεν μου λείπουν πολλά πράγματα.')),
+]
+
 /* ------------------------------------------------ описание полей анкеты */
 
 export type FieldType =
@@ -312,6 +389,8 @@ export const SECTIONS = [
   { id: 'life', title: 'Жизнь на Кипре', emoji: '🌞' },
   { id: 'referees', title: 'Поручители', emoji: '✍️' },
   { id: 'passport', title: 'Паспорт и будущее', emoji: '🛂' },
+  { id: 'travel', title: 'Поездки и документы', emoji: '✈️' },
+  { id: 'daily', title: 'Быт и мнение', emoji: '🏡' },
 ]
 
 const GR_HINT = 'Пишите греческими буквами — так, как будете произносить.'
@@ -429,6 +508,29 @@ export const FIELDS: FieldDef[] = [
   // паспорт
   { key: 'passportReasons', label: 'Зачем паспорт (выберите 2, по порядку)', type: 'multi', section: 'passport', options: opts(PASSPORT_REASONS) },
   { key: 'benefits', label: 'Чем полезны Кипру', type: 'multi', section: 'passport', options: opts(BENEFITS) },
+
+  // поездки и документы
+  { key: 'permitType', label: 'Какой у вас ВНЖ', type: 'select', section: 'travel', options: opts(PERMITS) },
+  { key: 'permitSince', label: 'ВНЖ с (год)', type: 'year', section: 'travel' },
+  { key: 'applicationDate', label: 'Дата подачи заявления на гражданство', type: 'date', section: 'travel' },
+  { key: 'tripsPerYear', label: 'Сколько раз в год выезжаете с Кипра', type: 'number', section: 'travel', hint: 'Уточните по штампам в паспорте — эти данные могут сверить.' },
+  { key: 'daysAbroad', label: 'Сколько дней провели вне Кипра за прошлый год', type: 'number', section: 'travel' },
+  { key: 'visitHome', label: 'Как часто ездите на родину', type: 'select', section: 'travel', options: opts(VISIT_HOME) },
+  { key: 'lastTripPlace', label: 'Последняя поездка — куда', type: 'country', section: 'travel', places: [...DESTINATIONS, ...COUNTRIES] },
+  { key: 'lastTripDate', label: 'Последняя поездка — когда', type: 'date', section: 'travel' },
+  { key: 'lastTripWhy', label: 'Цель последней поездки', type: 'select', section: 'travel', options: opts(TRIP_WHY) },
+  { key: 'gesy', label: 'Вы в ГеСИ (ΓεΣΥ), есть личный врач', type: 'bool', section: 'travel' },
+  { key: 'hasCar', label: 'Есть машина', type: 'bool', section: 'travel' },
+  { key: 'cyLicense', label: 'Кипрские водительские права', type: 'bool', section: 'travel', showIf: (p) => p.hasCar },
+
+  // быт и мнение
+  { key: 'favPlace', label: 'Любимое место на Кипре', type: 'select', section: 'daily', options: opts(FAV_PLACES) },
+  { key: 'season', label: 'Любимое время года', type: 'select', section: 'daily', options: opts(SEASONS) },
+  { key: 'nearby', label: 'Что рядом с домом', type: 'multi', section: 'daily', options: opts(NEARBY) },
+  { key: 'pet', label: 'Домашнее животное', type: 'select', section: 'daily', options: opts(PETS) },
+  { key: 'petName', label: 'Кличка (по-гречески)', type: 'text', section: 'daily', placeholder: 'Μπάρμπι', showIf: (p) => p.pet && p.pet !== 'none' },
+  { key: 'dislikes', label: 'Что не нравится на Кипре (мягко!)', type: 'multi', section: 'daily', options: opts(DISLIKES), hint: 'Выберите 1–2 безобидные вещи. Ответ всё равно закончится тем, что Кипр вам очень нравится.' },
+  { key: 'miss', label: 'По чему скучаете', type: 'multi', section: 'daily', options: opts(MISS) },
 ]
 
 export const FIELD_BY_KEY = Object.fromEntries(FIELDS.map((f) => [f.key, f]))
@@ -459,6 +561,17 @@ export const DEFAULT_PROFILE: Profile = {
   likeCy: ['climate', 'people', 'safety'],
   moveReasons: ['work', 'safety'],
   greekWhere: 'teacher',
+  visitHome: 'yearly',
+  lastTripWhy: 'holiday',
+  gesy: true,
+  hasCar: true,
+  cyLicense: true,
+  favPlace: 'troodos',
+  season: 'spring',
+  nearby: ['supermarket', 'pharmacy', 'park'],
+  pet: 'none',
+  dislikes: ['heat', 'traffic'],
+  miss: ['parents'],
 }
 
 /** Какие поля считаются в прогрессе заполнения. */
@@ -482,4 +595,4 @@ export function isFieldFilled(f: FieldDef, p: Profile): boolean {
 }
 
 /** Необязательные поля не влияют на прогресс анкеты. */
-export const OPTIONAL_FIELDS = new Set(['moveReasonCustom', 'jobCustom', 'relatives', 'postcode', 'prevMarriage', 'prevMarriageText', 'church', 'bonus', 'dividends', 'investments', 'langs'])
+export const OPTIONAL_FIELDS = new Set(['moveReasonCustom', 'jobCustom', 'relatives', 'postcode', 'prevMarriage', 'prevMarriageText', 'church', 'bonus', 'dividends', 'investments', 'langs', 'petName', 'lastTripPlace', 'lastTripDate'])

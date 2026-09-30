@@ -1,6 +1,6 @@
 import type { Gender, Tri } from '../types'
 import {
-  CITIES, COUNTRIES, duration, hole, inMonth, money, onDate, parseDate, placeForms, tri, triAll, yearsBetween,
+  ALL_COUNTRIES, CITIES, duration, hole, inMonth, money, onDate, parseDate, placeForms, tri, triAll, yearsBetween,
   type PlaceForms,
 } from './grammar'
 import type { Choice, GTri, NameValue, Profile } from '../data/profile'
@@ -60,7 +60,7 @@ export function makeCtx(p: Profile): Ctx {
       return tri(gr, en, en)
     },
     city: (key, label) => placeForms(p[key], CITIES, label),
-    country: (key, label) => placeForms(p[key], COUNTRIES, label),
+    country: (key, label) => placeForms(p[key], ALL_COUNTRIES, label),
     date: (key, label) => onDate(p[key], label),
     month: (key, label) => inMonth(p[key], label),
     money: (key, label) => money(p[key], label),

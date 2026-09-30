@@ -7,7 +7,7 @@ const require = createRequire(import.meta.url)
 require('reflect-metadata')
 const { validateInitData } = require('../dist/auth/telegram-init-data.js')
 const { RemindersService } = require('../dist/reminders/reminders.service.js')
-const { localNow } = require('../dist/reminders/texts.js')
+const { localNow, daysUntil, countdownLine, weeklyText, reminderText } = require('../dist/reminders/texts.js')
 
 const TOKEN = '123456:TEST-token'
 function sign(fields, token = TOKEN) {
@@ -36,7 +36,7 @@ test('initData: устарела', () => {
 
 // Время: 2026-09-30, Никосия UTC+3
 const at = (hm) => new Date(`2026-09-30T${hm}:00+03:00`)
-const svc = new RemindersService({}, {}, undefined)
+const svc = new RemindersService({}, {}, {}, undefined)
 const u = (o = {}) => ({ remindEnabled: true, tz: 'Europe/Nicosia', remindTime: '19:00', eveningNudge: true, tgId: '1', tgBlocked: false, pushSubscriptions: [], lastActiveDate: null, lastRemindedDate: null, lastEveningDate: null, ...o })
 
 test('localNow учитывает часовой пояс', () => {
@@ -67,4 +67,36 @@ test('нет каналов доставки — не напоминаем', () 
 })
 test('выключено — не напоминаем', () => {
   assert.equal(svc.dueKind(u({ remindEnabled: false }), at('19:00')), null)
+})
+
+test('«через час»: ждём, потом snooze; если уже позанимался — ничего', () => {
+  const x = u({ lastRemindedDate: '2026-09-30', snoozeUntil: at('21:30') })
+  assert.equal(svc.dueKind(x, at('20:30')), null)
+  assert.equal(svc.dueKind(x, at('21:00')), null) // пока ждём snooze, вечернее не шлём
+  assert.equal(svc.dueKind(x, at('21:30')), 'snooze')
+  assert.equal(svc.dueKind({ ...x, lastActiveDate: '2026-09-30' }, at('21:35')), null)
+})
+test('итоги недели: воскресенье 12:00, только тем, кто занимался', () => {
+  const sun = (hm) => new Date(`2026-10-04T${hm}:00+03:00`) // 4 октября 2026 — воскресенье
+  assert.equal(svc.dueKind(u({ lastActiveDate: '2026-10-03' }), sun('11:59')), null)
+  assert.equal(svc.dueKind(u({ lastActiveDate: '2026-10-03' }), sun('12:00')), 'weekly')
+  assert.equal(svc.dueKind(u({ lastActiveDate: '2026-10-03', lastWeeklyDate: '2026-10-04' }), sun('12:30')), null)
+  assert.equal(svc.dueKind(u({ lastActiveDate: null }), sun('12:00')), null)
+  assert.equal(svc.dueKind(u({ lastActiveDate: '2026-10-03' }), at('12:00')), null) // среда
+})
+test('обратный отсчёт', () => {
+  assert.equal(daysUntil('2026-11-09', '2026-09-30'), 40)
+  assert.equal(daysUntil('2026-09-29', '2026-09-30'), null)
+  assert.equal(countdownLine(40), '📅 До собеседования: 40 дней')
+  assert.equal(countdownLine(1), '📅 До собеседования: 1 день — финишная прямая: прогоните симуляцию и слабые вопросы.')
+  assert.match(countdownLine(0), /сегодня/)
+  assert.match(reminderText('main', '2026-09-30', 22).html, /До собеседования: 22 дня/)
+  assert.doesNotMatch(reminderText('main', '2026-09-30', null).html, /До собеседования/)
+})
+test('текст итогов недели', () => {
+  const t = weeklyText({ from: '2026-09-28', to: '2026-10-04', activeDays: 5, streak: 12, cards: 240, sims: 10, listen: 30, minutes: 95 }, 34)
+  assert.match(t.html, /28 сентября — 4 октября/)
+  assert.match(t.html, /5 из 7/)
+  assert.match(t.html, /Серия: 12 дней/)
+  assert.match(t.html, /До собеседования: 34 дня/)
 })

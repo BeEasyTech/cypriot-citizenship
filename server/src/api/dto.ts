@@ -1,5 +1,5 @@
 import { Type } from 'class-transformer'
-import { IsBoolean, IsOptional, IsString, Matches, MaxLength, ValidateNested } from 'class-validator'
+import { IsBoolean, IsInt, IsOptional, IsString, Matches, Max, MaxLength, Min, ValidateNested } from 'class-validator'
 
 const HHMM = /^([01]\d|2[0-3]):[0-5]\d$/
 const DATE = /^\d{4}-\d{2}-\d{2}$/
@@ -25,6 +25,23 @@ export class ActivityDto {
 
   @IsOptional() @IsString() @MaxLength(64)
   tz?: string
+
+  /** Накопительные числа за день — только количество, без содержимого. */
+  @IsOptional() @IsInt() @Min(0) @Max(100000)
+  cards?: number
+
+  @IsOptional() @IsInt() @Min(0) @Max(100000)
+  sims?: number
+
+  @IsOptional() @IsInt() @Min(0) @Max(100000)
+  listen?: number
+
+  @IsOptional() @IsInt() @Min(0) @Max(100000)
+  minutes?: number
+
+  /** Дата собеседования для обратного отсчёта ('' — сбросить). */
+  @IsOptional() @Matches(/^(\d{4}-\d{2}-\d{2})?$/)
+  interviewDate?: string
 }
 
 class PushKeysDto {

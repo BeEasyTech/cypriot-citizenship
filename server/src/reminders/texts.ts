@@ -43,18 +43,72 @@ export function phraseOfDay(date: string) {
   return { gr, ru }
 }
 
-export function reminderText(kind: 'main' | 'evening', date: string) {
-  const list = kind === 'main' ? MAIN : EVENING
-  const head = list[dayIndex(date) % list.length]
+export type ReminderKind = 'main' | 'evening' | 'snooze'
+
+const SNOOZE = '⏰ Как договаривались — напоминаю: пора позаниматься греческим!'
+
+export function ruPlural(n: number, one: string, few: string, many: string) {
+  const n10 = n % 10, n100 = n % 100
+  if (n10 === 1 && n100 !== 11) return one
+  if (n10 >= 2 && n10 <= 4 && (n100 < 12 || n100 > 14)) return few
+  return many
+}
+
+/** Дней до собеседования (от локальной даты), null — если дата не задана или прошла. */
+export function daysUntil(interviewDate: string | null | undefined, today: string): number | null {
+  if (!interviewDate) return null
+  const d = Math.round((Date.parse(interviewDate + 'T00:00:00Z') - Date.parse(today + 'T00:00:00Z')) / 86_400_000)
+  return d >= 0 ? d : null
+}
+
+export function countdownLine(days: number | null): string {
+  if (days === null) return ''
+  if (days === 0) return '🍀 Собеседование сегодня! Καλή επιτυχία!'
+  const base = `📅 До собеседования: ${days} ${ruPlural(days, 'день', 'дня', 'дней')}`
+  return days <= 7 ? `${base} — финишная прямая: прогоните симуляцию и слабые вопросы.` : base
+}
+
+export function reminderText(kind: ReminderKind, date: string, daysLeft: number | null = null) {
+  const head = kind === 'snooze' ? SNOOZE : (kind === 'main' ? MAIN : EVENING)[dayIndex(date) % (kind === 'main' ? MAIN : EVENING).length]
   const p = phraseOfDay(date)
+  const cd = countdownLine(daysLeft)
   return {
     /** Для Telegram (HTML). */
-    html: `${head}\n\n💬 <b>Фраза дня:</b> <i>${p.gr}</i>\n${p.ru}`,
+    html: `${head}${cd ? `\n${cd}` : ''}\n\n💬 <b>Фраза дня:</b> <i>${p.gr}</i>\n${p.ru}`,
     /** Для Web Push. */
-    title: kind === 'main' ? 'Время для греческого 🇨🇾' : 'Ещё не поздно 🌙',
-    body: `${head.replace(/^\S+\s/, '')}\n💬 ${p.gr}`,
+    title: kind === 'evening' ? 'Ещё не поздно 🌙' : 'Время для греческого 🇨🇾',
+    body: `${head.replace(/^\S+\s/, '')}${cd ? `\n${cd}` : ''}\n💬 ${p.gr}`,
   }
 }
+
+const RU_MONTHS = ['января', 'февраля', 'марта', 'апреля', 'мая', 'июня', 'июля', 'августа', 'сентября', 'октября', 'ноября', 'декабря']
+const dayMonth = (d: string) => `${Number(d.slice(8, 10))} ${RU_MONTHS[Number(d.slice(5, 7)) - 1]}`
+
+export function weeklyText(w: { from: string; to: string; activeDays: number; streak: number; cards: number; sims: number; listen: number; minutes: number }, daysLeft: number | null) {
+  const cheer = w.activeDays >= 6 ? 'Μπράβο! Отличная неделя 💪'
+    : w.activeDays >= 3 ? 'Хороший темп. Попробуйте добавить ещё пару дней на следующей неделе.'
+    : w.activeDays > 0 ? 'Главное — регулярность: даже 10 минут в день дают результат.'
+    : 'На этой неделе занятий не было. Начнём заново — всего 10 минут сегодня?'
+  const lines = [
+    `📊 <b>Итоги недели</b> (${dayMonth(w.from)} — ${dayMonth(w.to)})`,
+    '',
+    `📆 Дней с занятиями: <b>${w.activeDays} из 7</b>`,
+    `🃏 Карточек: ${w.cards} · 🎙 Вопросов в симуляции: ${w.sims} · 👂 Квиз: ${w.listen}`,
+    `⏱ Минут: ${w.minutes}`,
+    `🔥 Серия: ${w.streak} ${ruPlural(w.streak, 'день', 'дня', 'дней')} подряд`,
+  ]
+  const cd = countdownLine(daysLeft)
+  if (cd) lines.push(cd)
+  lines.push('', cheer)
+  return {
+    html: lines.join('\n'),
+    title: 'Итоги недели 📊',
+    body: `Дней с занятиями: ${w.activeDays} из 7 · карточек: ${w.cards} · серия: ${w.streak}${cd ? `\n${cd}` : ''}`,
+  }
+}
+
+/** День недели (0 — воскресенье) для локальной даты. */
+export const weekday = (date: string) => new Date(date + 'T00:00:00Z').getUTCDay()
 
 /** Локальные дата и время в часовом поясе пользователя. */
 export function localNow(tz: string, now = new Date()) {

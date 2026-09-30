@@ -1,5 +1,5 @@
 import { useMemo, useRef, useState } from 'react'
-import { ChevronRight, Settings as Gear, Download, Upload, Cloud, Volume2, FileText } from 'lucide-react'
+import { ChevronRight, Settings as Gear, Download, Upload, Cloud, Volume2, FileText, ShieldCheck } from 'lucide-react'
 import { useStore } from '../store'
 import { useNav } from '../router'
 import { FIELDS, OPTIONAL_FIELDS, SECTIONS, isFieldFilled, isFieldVisible } from '../data/profile'
@@ -27,6 +27,7 @@ export function ProfileHome() {
   const fill = useSectionFill()
   const total = Object.values(fill).reduce((a, [x, y]) => [a[0] + x, a[1] + y], [0, 0])
   const pct = total[1] ? total[0] / total[1] : 0
+  const inTg = cloudAvailable()
 
   return (
     <Screen title="Анкета" subtitle="Из неё собираются ваши ответы" back={false}
@@ -35,6 +36,18 @@ export function ProfileHome() {
         <Ring value={pct} size={56} stroke={5}><span className="text-[14px] font-bold">{Math.round(pct * 100)}%</span></Ring>
         <div className="flex-1 text-[14px] leading-snug text-muted">
           Заполните данные по-русски; имена и названия — греческими буквами. Ответы на греческом, английском и русском соберутся автоматически.
+        </div>
+      </div>
+
+      <div className="mt-3 flex gap-3 rounded-2xl bg-ok-soft p-3.5 text-[13px] leading-snug">
+        <ShieldCheck size={20} className="mt-0.5 shrink-0 text-ok" />
+        <div>
+          <div className="font-semibold text-ok">Ваши данные — только у вас</div>
+          <div className="mt-0.5 text-fg/80">
+            Анкета и ответы хранятся на этом устройстве и <b>не отправляются на наш сервер</b>.
+            {inTg ? ' В Telegram они синхронизируются между вашими устройствами через ваше личное облако Telegram.' : ''}
+            {' '}Серверу напоминаний известны только настройки напоминаний, дата собеседования и сколько вы занимались (числа).
+          </div>
         </div>
       </div>
 
@@ -196,7 +209,7 @@ export function Settings() {
             }} />
           </div>
           {msg && <div className="text-[14px] text-muted">{msg}</div>}
-          <div className="text-[12px] text-muted">Анкета хранится на устройстве и (в Telegram) в вашем облаке Telegram. При включённой облачной озвучке озвучиваемый текст, включая ваши ответы, отправляется в Azure для синтеза речи.</div>
+          <div className="text-[12px] text-muted">Анкета и ответы хранятся на устройстве и не отправляются на наш сервер; в Telegram — синхронизируются через ваше личное облако Telegram. Серверу напоминаний известны только настройки напоминаний, дата собеседования и числа занятий за день. Для статистики посещений используется анонимная Vercel Analytics. Если включить облачную озвучку Azure, озвучиваемый текст (в том числе ваши ответы) отправляется в Azure для синтеза речи.</div>
         </div>
       </Section>
 

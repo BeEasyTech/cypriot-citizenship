@@ -1,4 +1,6 @@
 import { Controller, Get, Module, type DynamicModule } from '@nestjs/common'
+import { APP_FILTER } from '@nestjs/core'
+import { SentryGlobalFilter, SentryModule } from '@sentry/nestjs/setup'
 import { ConfigModule, ConfigService } from '@nestjs/config'
 import { ScheduleModule } from '@nestjs/schedule'
 import { TypeOrmModule } from '@nestjs/typeorm'
@@ -7,6 +9,8 @@ import { dataSourceOptions } from './data-source'
 import { User } from './entities/user.entity'
 import { PushSubscription } from './entities/push-subscription.entity'
 import { AppSetting } from './entities/app-setting.entity'
+import { DailyActivity } from './entities/daily-activity.entity'
+import { ActivityService } from './activity/activity.service'
 import { UsersService } from './users/users.service'
 import { AuthGuard } from './auth/auth.guard'
 import { PushService } from './push/push.service'
@@ -41,18 +45,21 @@ const botImports: DynamicModule[] = botEnabled
 
 @Module({
   imports: [
+    SentryModule.forRoot(),
     ConfigModule.forRoot({ isGlobal: true }),
     ScheduleModule.forRoot(),
     TypeOrmModule.forRootAsync({ useFactory: () => dataSourceOptions() }),
-    TypeOrmModule.forFeature([User, PushSubscription, AppSetting]),
+    TypeOrmModule.forFeature([User, PushSubscription, AppSetting, DailyActivity]),
     ...botImports,
   ],
   controllers: [HealthController, ApiController],
   providers: [
+    { provide: APP_FILTER, useClass: SentryGlobalFilter },
     UsersService,
     AuthGuard,
     PushService,
     RemindersService,
+    ActivityService,
     ...(botEnabled ? [BotService, BotUpdate] : []),
   ],
 })

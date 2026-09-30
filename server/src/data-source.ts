@@ -4,6 +4,8 @@ import { User } from './entities/user.entity'
 import { PushSubscription } from './entities/push-subscription.entity'
 import { AppSetting } from './entities/app-setting.entity'
 import { Init1759200000000 } from './migrations/1759200000000-Init'
+import { Activity1759300000000 } from './migrations/1759300000000-Activity'
+import { DailyActivity } from './entities/daily-activity.entity'
 
 /** Общие настройки БД: используются и приложением, и CLI TypeORM (миграции). */
 export function dataSourceOptions(url = process.env.DATABASE_URL): DataSourceOptions {
@@ -12,8 +14,8 @@ export function dataSourceOptions(url = process.env.DATABASE_URL): DataSourceOpt
   return {
     type: 'postgres',
     url,
-    entities: [User, PushSubscription, AppSetting],
-    migrations: [Init1759200000000],
+    entities: [User, PushSubscription, AppSetting, DailyActivity],
+    migrations: [Init1759200000000, Activity1759300000000],
     migrationsRun: true,
     synchronize: false,
     ssl: local || process.env.DATABASE_SSL === 'false' ? false : { rejectUnauthorized: false },

@@ -57,7 +57,8 @@ export const localTz = () => Intl.DateTimeFormat().resolvedOptions().timeZone ||
 export const api = {
   me: () => call<Me>('GET', '/api/me'),
   update: (patch: Partial<Pick<Me, 'remindEnabled' | 'remindTime' | 'eveningNudge' | 'tz'>>) => call<Me>('PATCH', '/api/me', patch),
-  activity: (date: string) => call<void>('POST', '/api/activity', { date, tz: localTz() }),
+  activity: (a: { date: string; cards: number; sims: number; listen: number; minutes: number; interviewDate: string }) =>
+    call<void>('POST', '/api/activity', { ...a, tz: localTz() }),
   vapid: () => call<{ publicKey: string }>('GET', '/api/push/vapid'),
   subscribe: (s: PushSubscriptionJSON) => call<void>('POST', '/api/push/subscribe', { endpoint: s.endpoint, keys: s.keys }),
   unsubscribe: (endpoint: string) => call<void>('DELETE', '/api/push/subscribe', { endpoint }),

@@ -2,6 +2,7 @@ import { Injectable, Logger } from '@nestjs/common'
 import { ConfigService } from '@nestjs/config'
 import { InjectBot } from 'nestjs-telegraf'
 import { Markup, Telegraf } from 'telegraf'
+import type { InlineKeyboardButton } from 'telegraf/types'
 import { UsersService } from '../users/users.service'
 import type { User } from '../entities/user.entity'
 
@@ -21,16 +22,28 @@ export class BotService {
 
   /** Кнопка «Открыть тренажёр»: web_app работает только с https-адресом. */
   openAppKeyboard() {
+    const kb = this.keyboard(false)
+    return kb.length ? Markup.inlineKeyboard(kb) : undefined
+  }
+
+  /** Кнопки: открыть приложение и (для напоминаний) «через час / уже / не сегодня». */
+  keyboard(reminderButtons: boolean) {
     const url = this.webAppUrl
-    if (!url.startsWith('https://')) return undefined
-    return Markup.inlineKeyboard([Markup.button.webApp('📱 Открыть тренажёр', url)])
+    const out: InlineKeyboardButton[][] = []
+    if (url.startsWith('https://')) out.push([Markup.button.webApp('📱 Открыть тренажёр', url)])
+    if (reminderButtons) {
+      out.push([Markup.button.callback('⏰ Через час', 'r:snooze'), Markup.button.callback('✅ Уже позанимался(ась)', 'r:done')])
+      out.push([Markup.button.callback('🔕 Сегодня не надо', 'r:skip')])
+    }
+    return out
   }
 
   /** Отправить сообщение; если пользователь заблокировал бота — пометить. */
-  async send(user: User, html: string): Promise<boolean> {
+  async send(user: User, html: string, opts: { reminderButtons?: boolean } = {}): Promise<boolean> {
     if (!user.tgId || user.tgBlocked) return false
+    const kb = this.keyboard(!!opts.reminderButtons)
     try {
-      await this.bot.telegram.sendMessage(user.tgId, html, { parse_mode: 'HTML', ...this.openAppKeyboard() })
+      await this.bot.telegram.sendMessage(user.tgId, html, { parse_mode: 'HTML', ...(kb.length ? Markup.inlineKeyboard(kb) : {}) })
       return true
     } catch (e) {
       const code = (e as { response?: { error_code?: number } }).response?.error_code

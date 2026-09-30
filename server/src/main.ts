@@ -1,3 +1,4 @@
+import './instrument'
 import 'reflect-metadata'
 import { createHash } from 'node:crypto'
 import { Logger, ValidationPipe } from '@nestjs/common'

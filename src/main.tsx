@@ -1,12 +1,26 @@
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import './index.css'
+import { inject } from '@vercel/analytics'
+import * as Sentry from '@sentry/react'
 import App from './App'
 import { initTelegram, loadTelegramSdk } from './lib/telegram'
 import { startSync } from './sync'
 import { probeCloud, useCloud } from './lib/tts'
 import { useStore, todayKey } from './store'
 import { api, apiEnabled } from './lib/api'
+
+// Анонимная статистика посещений (работает только на Vercel).
+inject()
+
+// Ошибки фронтенда — в Sentry, если задан DSN. Без содержимого анкеты.
+if (import.meta.env.VITE_SENTRY_DSN) {
+  Sentry.init({
+    dsn: import.meta.env.VITE_SENTRY_DSN as string,
+    environment: import.meta.env.MODE,
+    beforeBreadcrumb: (b) => (b.category === 'ui.input' ? null : b),
+  })
+}
 
 async function boot() {
   await loadTelegramSdk()
@@ -29,20 +43,35 @@ async function boot() {
   applyCloud()
   useStore.subscribe(applyCloud)
 
-  // Сообщаем серверу только факт «сегодня занимался(ась)» — чтобы не присылать лишних напоминаний.
+  // Серверу уходят только числа за день и дата собеседования — для напоминаний и итогов недели.
+  // Анкета и ответы на сервер не отправляются.
   if (apiEnabled) {
-    const KEY = 'gi_active_ping'
-    const ping = () => {
+    let lastSent = ''
+    let timer: ReturnType<typeof setTimeout> | undefined
+    const payload = () => {
+      const { days, settings } = useStore.getState()
       const today = todayKey()
-      const d = useStore.getState().days[today]
-      if (!d || d.reviews + d.sims + d.listen === 0) return
-      let last: string | null = null
-      try { last = localStorage.getItem(KEY) } catch { /* нет доступа */ }
-      if (last === today) return
-      api.activity(today).then(() => { try { localStorage.setItem(KEY, today) } catch { /* нет доступа */ } }).catch(() => undefined)
+      const d = days[today]
+      return {
+        date: today,
+        cards: d?.reviews ?? 0,
+        sims: d?.sims ?? 0,
+        listen: d?.listen ?? 0,
+        minutes: Math.round((d?.seconds ?? 0) / 60),
+        interviewDate: settings.interviewDate || '',
+      }
     }
-    ping()
-    useStore.subscribe(ping)
+    const send = () => {
+      const p = payload()
+      const key = JSON.stringify(p)
+      if (key === lastSent) return
+      lastSent = key // сразу, чтобы не отправить то же самое дважды
+      api.activity(p).catch(() => { if (lastSent === key) lastSent = '' })
+    }
+    const schedule = () => { clearTimeout(timer); timer = setTimeout(send, 15_000) }
+    send()
+    useStore.subscribe(schedule)
+    document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden') { clearTimeout(timer); send() } })
   }
 }
 

@@ -7,6 +7,7 @@ import { RemindersService } from '../reminders/reminders.service'
 import type { User } from '../entities/user.entity'
 import { ActivityDto, PushSubscribeDto, PushUnsubscribeDto, UpdateMeDto } from './dto'
 import { localNow } from '../reminders/texts'
+import { ActivityService } from '../activity/activity.service'
 
 @Controller('api')
 export class ApiController {
@@ -14,6 +15,7 @@ export class ApiController {
     private readonly users: UsersService,
     private readonly push: PushService,
     private readonly reminders: RemindersService,
+    private readonly activityService: ActivityService,
   ) {}
 
   /** Публичный VAPID-ключ для подписки на push. */
@@ -44,9 +46,15 @@ export class ApiController {
   @Post('activity')
   @HttpCode(204)
   async activity(@CurrentUser() u: User, @Body() dto: ActivityDto) {
-    const patch: Partial<User> = { lastActiveDate: dto.date }
+    const active = (dto.cards ?? 0) + (dto.sims ?? 0) + (dto.listen ?? 0) > 0 || dto.cards === undefined
+    const patch: Partial<User> = {}
+    if (active) patch.lastActiveDate = dto.date
     if (dto.tz && isValidTz(dto.tz)) patch.tz = dto.tz
-    await this.users.update(u.id, patch)
+    if (dto.interviewDate !== undefined) patch.interviewDate = dto.interviewDate || null
+    if (Object.keys(patch).length) await this.users.update(u.id, patch)
+    if (dto.cards !== undefined || dto.sims !== undefined || dto.listen !== undefined || dto.minutes !== undefined) {
+      await this.activityService.record(u.id, dto.date, dto)
+    }
   }
 
   @UseGuards(AuthGuard)

@@ -1,5 +1,12 @@
-import { Command, Ctx, On, Start, Update } from 'nestjs-telegraf'
-import type { Context } from 'telegraf'
+import { Action, Command, Ctx, On, Start, Update } from 'nestjs-telegraf'
+import { ConfigService } from '@nestjs/config'
+import { InjectRepository } from '@nestjs/typeorm'
+import { Repository } from 'typeorm'
+import { User as UserEntity } from '../entities/user.entity'
+import { PushSubscription } from '../entities/push-subscription.entity'
+import { DailyActivity } from '../entities/daily-activity.entity'
+import { localNow } from '../reminders/texts'
+import { Markup, type Context } from 'telegraf'
 import { UsersService } from '../users/users.service'
 import { BotService } from './bot.service'
 import type { User } from '../entities/user.entity'
@@ -28,7 +35,14 @@ const HELP = [
 
 @Update()
 export class BotUpdate {
-  constructor(private readonly users: UsersService, private readonly botService: BotService) {}
+  constructor(
+    private readonly users: UsersService,
+    private readonly botService: BotService,
+    private readonly config: ConfigService,
+    @InjectRepository(UserEntity) private readonly userRepo: Repository<UserEntity>,
+    @InjectRepository(PushSubscription) private readonly subRepo: Repository<PushSubscription>,
+    @InjectRepository(DailyActivity) private readonly dayRepo: Repository<DailyActivity>,
+  ) {}
 
   private async me(ctx: Context) {
     const u = await this.users.findOrCreateByTg(ctx.from!.id, nameOf(ctx))
@@ -106,6 +120,75 @@ export class BotUpdate {
   @Command('help')
   async help(@Ctx() ctx: Context) {
     await ctx.reply(HELP)
+  }
+
+  /** Кнопки под напоминанием. */
+  @Action(/^r:(snooze|done|skip)$/)
+  async reminderAction(@Ctx() ctx: Context) {
+    const action = (ctx.callbackQuery as { data?: string }).data?.slice(2)
+    const u = await this.me(ctx)
+    const { date } = localNow(u.tz)
+    let toast = ''
+    let note = ''
+    if (action === 'snooze') {
+      u.snoozeUntil = new Date(Date.now() + 60 * 60_000)
+      toast = 'Напомню через час ⏰'
+      note = '⏰ Напомню через час'
+    } else if (action === 'done') {
+      u.lastActiveDate = date
+      u.snoozeUntil = null
+      toast = 'Μπράβο! Сегодня больше не напомню 💪'
+      note = '✅ Сегодня уже позанимался(ась)'
+    } else {
+      u.lastRemindedDate = date
+      u.lastEveningDate = date
+      u.snoozeUntil = null
+      toast = 'Хорошо, сегодня больше не беспокою'
+      note = '🔕 Сегодня без напоминаний'
+    }
+    await this.users.save(u)
+    await ctx.answerCbQuery(toast)
+    // Вместо кнопок-действий показываем выбранный вариант; «Открыть тренажёр» остаётся.
+    const kb = [...this.botService.keyboard(false), [Markup.button.callback(note, 'r:noop')]]
+    await ctx.editMessageReplyMarkup({ inline_keyboard: kb }).catch(() => undefined)
+  }
+
+  @Action('r:noop')
+  async noop(@Ctx() ctx: Context) {
+    await ctx.answerCbQuery()
+  }
+
+  /** Статистика для владельца бота (ADMIN_TG_IDS). */
+  @Command('stats')
+  async stats(@Ctx() ctx: Context) {
+    const admins = (this.config.get<string>('ADMIN_TG_IDS') ?? '').split(',').map((x) => x.trim()).filter(Boolean)
+    if (!ctx.from || !admins.includes(String(ctx.from.id))) {
+      await ctx.reply('Эта команда только для владельца бота.')
+      return
+    }
+    const today = localNow('Europe/Nicosia').date
+    const weekAgo = new Date(Date.parse(today + 'T00:00:00Z') - 6 * 86_400_000).toISOString().slice(0, 10)
+    const [total, tg, pwa, blocked, reminders, subs, activeToday, active7, cards7] = await Promise.all([
+      this.userRepo.count(),
+      this.userRepo.createQueryBuilder('u').where('u.tgId IS NOT NULL').getCount(),
+      this.userRepo.createQueryBuilder('u').where('u.deviceId IS NOT NULL').getCount(),
+      this.userRepo.count({ where: { tgBlocked: true } }),
+      this.userRepo.count({ where: { remindEnabled: true } }),
+      this.subRepo.count(),
+      this.userRepo.count({ where: { lastActiveDate: today } }),
+      this.dayRepo.createQueryBuilder('d').select('COUNT(DISTINCT d.userId)', 'n').where('d.date >= :weekAgo', { weekAgo }).getRawOne<{ n: string }>(),
+      this.dayRepo.createQueryBuilder('d').select('COALESCE(SUM(d.cards), 0)', 'n').where('d.date >= :weekAgo', { weekAgo }).getRawOne<{ n: string }>(),
+    ])
+    await ctx.reply([
+      '📈 <b>Статистика</b>',
+      `Пользователей: ${total} (Telegram: ${tg}, PWA: ${pwa})`,
+      `Заблокировали бота: ${blocked}`,
+      `Напоминания включены: ${reminders}`,
+      `Push-подписок: ${subs}`,
+      `Занимались сегодня: ${activeToday}`,
+      `Активных за 7 дней: ${active7?.n ?? 0}`,
+      `Карточек за 7 дней: ${cards7?.n ?? 0}`,
+    ].join('\n'), { parse_mode: 'HTML' })
   }
 
   /** Пользователь заблокировал / разблокировал бота. */

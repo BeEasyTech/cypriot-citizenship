@@ -48,6 +48,18 @@ export class User {
   @Column({ name: 'last_evening_date', type: 'date', nullable: true })
   lastEveningDate: string | null
 
+  /** «Напомнить через час» — время повторного напоминания. */
+  @Column({ name: 'snooze_until', type: 'timestamptz', nullable: true })
+  snoozeUntil: Date | null
+
+  /** Когда отправлены последние итоги недели (локальная дата воскресенья). */
+  @Column({ name: 'last_weekly_date', type: 'date', nullable: true })
+  lastWeeklyDate: string | null
+
+  /** Дата собеседования (для обратного отсчёта). */
+  @Column({ name: 'interview_date', type: 'date', nullable: true })
+  interviewDate: string | null
+
   /** Пользователь заблокировал бота — сообщения не шлём. */
   @Column({ name: 'tg_blocked', type: 'boolean', default: false })
   tgBlocked: boolean

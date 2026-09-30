@@ -31,12 +31,6 @@ npx vercel --prod
 | `AZURE_SPEECH_KEY` | ключ ресурса Azure AI Speech (тариф Free F0) |
 | `AZURE_SPEECH_REGION` | `westeurope` |
 
-## Telegram Mini App
-
-1. @BotFather → `/newbot`.
-2. `/mybots` → бот → Bot Settings → Configure Mini App → Enable → URL деплоя.
-3. Bot Settings → Menu Button → тот же URL.
-
 ## Структура
 
 - `src/data/topics.ts` — вопросы и шаблоны ответов

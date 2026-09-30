@@ -205,13 +205,20 @@ export const useStore = create<State & Actions>()(
         return {
           ...current,
           ...p,
-          profile: { ...DEFAULT_PROFILE, ...(p.profile ?? {}) },
+          profile: migrateProfile({ ...DEFAULT_PROFILE, ...(p.profile ?? {}) }),
           settings: { ...DEFAULT_SETTINGS, ...(p.settings ?? {}) },
         }
       },
     },
   ),
 )
+
+/** Поля, которые стали мультивыбором: старое строковое значение → массив. */
+function migrateProfile(p: Profile): Profile {
+  const out = { ...p }
+  for (const k of ['greekWhere', 'favPlace']) if (typeof out[k] === 'string') out[k] = out[k] ? [out[k]] : []
+  return out
+}
 
 export function pickState(s: State): State {
   return {

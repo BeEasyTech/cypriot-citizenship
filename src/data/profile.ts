@@ -250,6 +250,7 @@ export const PASSPORT_REASONS: Choice[] = [
   c('belong', 'Стать полноправным членом общества', g('θέλω να είμαι πλήρες μέλος της κυπριακής κοινωνίας, γιατί η Κύπρος είναι το σπίτι μου', 'I want to be a full member of Cypriot society, because Cyprus is my home', 'я хочу быть полноправным членом кипрского общества, потому что Кипр — мой дом')),
   c('vote', 'Голосовать', g('θέλω να ψηφίζω στις εκλογές και να συμμετέχω στη ζωή της χώρας', 'I want to vote in elections and take part in the life of the country', 'я хочу голосовать на выборах и участвовать в жизни страны')),
   c('kids', 'Будущее детей', g('θέλω τα παιδιά μου να έχουν ένα ασφαλές μέλλον εδώ', 'I want my children to have a secure future here', 'я хочу, чтобы у моих детей было надёжное будущее здесь')),
+  c('futureKids', 'Стабильность и будущее детей, которых планируем', g('θέλω σταθερότητα για την οικογένειά μου και να είμαι σίγουρος για το μέλλον των παιδιών που θέλουμε να κάνουμε', 'I want stability for my family and to be sure about the future of the children we want to have', 'я хочу стабильности для семьи и уверенности в будущем детей, которых мы планируем', 'θέλω σταθερότητα για την οικογένειά μου και να είμαι σίγουρη για το μέλλον των παιδιών που θέλουμε να κάνουμε')),
   c('stability', 'Стабильность (без продления ВНЖ)', g('θέλω σταθερότητα, χωρίς να ανανεώνω την άδεια διαμονής', 'I want stability, without renewing my residence permit', 'я хочу стабильности, без продления вида на жительство')),
   c('travel', 'Свободно путешествовать', g('θέλω να ταξιδεύω πιο εύκολα με την οικογένειά μου', 'I want to travel more easily with my family', 'я хочу свободнее путешествовать с семьёй')),
 ]
@@ -312,6 +313,19 @@ export const FAV_PLACES: Choice<FavPlace>[] = [
   c('omodos', 'Омодос', { name: g('το Όμοδος', 'Omodos', 'Омодос'), why: g('Είναι ένα γραφικό χωριό με καλό κρασί και ένα ωραίο μοναστήρι.', 'It is a picturesque village with good wine and a lovely monastery.', 'Это живописная деревня с хорошим вином и красивым монастырём.') }),
   c('ayianapa', 'Айя-Напа', { name: g('η Αγία Νάπα', 'Ayia Napa', 'Айя-Напа'), why: g('Έχει τις πιο ωραίες παραλίες της Κύπρου.', 'It has the most beautiful beaches in Cyprus.', 'Там самые красивые пляжи Кипра.') }),
   c('molos', 'Набережная Молос', { name: g('ο Μόλος στη Λεμεσό', 'the Molos promenade in Limassol', 'набережная Молос в Лимассоле'), why: g('Μου αρέσει να περπατάω δίπλα στη θάλασσα το βράδυ.', 'I like walking by the sea in the evening.', 'Люблю гулять вдоль моря вечером.') }),
+  c('kourion', 'Курион', { name: g('το Κούριο', 'Kourion', 'Курион'), why: g('Είναι ένας αρχαίος χώρος με ένα θέατρο πάνω από τη θάλασσα.', 'It is an ancient site with a theatre above the sea.', 'Это античный город с театром над морем.') }),
+  c('petra', 'Скала Афродиты', { name: g('η Πέτρα του Ρωμιού', 'Aphrodite\'s Rock', 'Скала Афродиты'), why: g('Σύμφωνα με τον μύθο, εκεί γεννήθηκε η Αφροδίτη. Η θέα είναι μαγευτική.', 'According to the myth, Aphrodite was born there. The view is magical.', 'По легенде, там родилась Афродита. Вид волшебный.') }),
+  c('capegreco', 'Мыс Греко', { name: g('το Κάβο Γκρέκο', 'Cape Greco', 'мыс Греко'), why: g('Έχει πανέμορφα βράχια, σπηλιές και καταγάλανα νερά.', 'It has beautiful rocks, caves and crystal-blue water.', 'Там красивые скалы, пещеры и лазурная вода.') }),
+  c('protaras', 'Протарас', { name: g('ο Πρωταράς', 'Protaras', 'Протарас'), why: g('Η θάλασσα είναι ζεστή και ρηχή, ιδανική για παιδιά.', 'The sea is warm and shallow, ideal for children.', 'Море тёплое и мелкое, идеально для детей.') }),
+  c('oldnicosia', 'Старая Никосия', { name: g('η παλιά Λευκωσία', 'the old town of Nicosia', 'старая Никосия'), why: g('Μου αρέσουν τα στενά δρομάκια, τα τείχη και τα μουσεία.', 'I like the narrow streets, the walls and the museums.', 'Мне нравятся узкие улочки, городские стены и музеи.') }),
+  c('limassolold', 'Старый Лимассол и замок', { name: g('η παλιά πόλη της Λεμεσού', 'the old town of Limassol', 'старый город Лимассола'), why: g('Μου αρέσει να περπατάω γύρω από το κάστρο και να πίνω καφέ στα στενά.', 'I like walking around the castle and having coffee in the little streets.', 'Люблю гулять вокруг замка и пить кофе в узких улочках.') }),
+  c('saltlake', 'Солёное озеро Ларнаки', { name: g('η Αλυκή της Λάρνακας', 'the Larnaca Salt Lake', 'солёное озеро в Ларнаке'), why: g('Τον χειμώνα έρχονται φλαμίνγκο και είναι πολύ όμορφα.', 'In winter flamingos come and it is very beautiful.', 'Зимой туда прилетают фламинго, это очень красиво.') }),
+  c('lazarus', 'Церковь Св. Лазаря', { name: g('η εκκλησία του Αγίου Λαζάρου', 'the Church of Saint Lazarus', 'церковь Святого Лазаря'), why: g('Είναι μια πολύ παλιά και όμορφη εκκλησία στο κέντρο της Λάρνακας.', 'It is a very old and beautiful church in the centre of Larnaca.', 'Это очень старая и красивая церковь в центре Ларнаки.') }),
+  c('tombs', 'Гробницы королей', { name: g('οι Τάφοι των Βασιλέων', 'the Tombs of the Kings', 'Гробницы королей'), why: g('Είναι ένας πολύ ενδιαφέρων αρχαιολογικός χώρος στην Πάφο.', 'It is a very interesting archaeological site in Paphos.', 'Это очень интересное место раскопок в Пафосе.') }),
+  c('kakopetria', 'Какопетрия', { name: g('η Κακοπετριά', 'Kakopetria', 'Какопетрия'), why: g('Είναι ένα όμορφο ορεινό χωριό με παλιά σπίτια και ένα ποτάμι.', 'It is a beautiful mountain village with old houses and a river.', 'Это красивая горная деревня со старыми домами и речкой.') }),
+  c('latchi', 'Лачи', { name: g('το Λατσί', 'Latchi', 'Лачи'), why: g('Είναι ένα ήσυχο ψαροχώρι με φρέσκο ψάρι και ωραία θάλασσα.', 'It is a quiet fishing village with fresh fish and a lovely sea.', 'Это тихая рыбацкая деревня со свежей рыбой и красивым морем.') }),
+  c('avakas', 'Ущелье Авакас', { name: g('το φαράγγι του Άβακα', 'the Avakas Gorge', 'ущелье Авакас'), why: g('Είναι ένα εντυπωσιακό φαράγγι για πεζοπορία.', 'It is an impressive gorge for hiking.', 'Это впечатляющее ущелье для походов.') }),
+  c('kolossi', 'Замок Колосси', { name: g('το κάστρο του Κολοσσίου', 'Kolossi Castle', 'замок Колосси'), why: g('Είναι ένα μεσαιωνικό κάστρο κοντά στη Λεμεσό.', 'It is a medieval castle near Limassol.', 'Это средневековый замок недалеко от Лимассола.') }),
   c('kykkos', 'Монастырь Киккос', { name: g('το μοναστήρι του Κύκκου', 'Kykkos Monastery', 'монастырь Киккос'), why: g('Είναι το πιο γνωστό μοναστήρι της Κύπρου και είναι πολύ όμορφο.', 'It is the most famous monastery in Cyprus and it is very beautiful.', 'Это самый известный монастырь Кипра, и он очень красивый.') }),
 ]
 
@@ -477,7 +491,7 @@ export const FIELDS: FieldDef[] = [
   { key: 'nativeLang', label: 'Родной язык', type: 'select', section: 'study', options: opts(LANGUAGES) },
   { key: 'langs', label: 'Другие языки', type: 'multi', section: 'study', options: opts(LANGUAGES) },
   { key: 'greekSince', label: 'Учу греческий с (год)', type: 'year', section: 'study' },
-  { key: 'greekWhere', label: 'Как учите греческий', type: 'select', section: 'study', options: opts(GREEK_WHERE) },
+  { key: 'greekWhere', label: 'Как учите греческий', type: 'multi', section: 'study', options: opts(GREEK_WHERE) },
 
   // жизнь на Кипре
   { key: 'hobbies', label: 'Хобби и свободное время', type: 'multi', section: 'life', options: opts(HOBBIES) },
@@ -524,7 +538,7 @@ export const FIELDS: FieldDef[] = [
   { key: 'cyLicense', label: 'Кипрские водительские права', type: 'bool', section: 'travel', showIf: (p) => p.hasCar },
 
   // быт и мнение
-  { key: 'favPlace', label: 'Любимое место на Кипре', type: 'select', section: 'daily', options: opts(FAV_PLACES) },
+  { key: 'favPlace', label: 'Любимые места на Кипре (первое — самое любимое)', type: 'multi', section: 'daily', options: opts(FAV_PLACES) },
   { key: 'season', label: 'Любимое время года', type: 'select', section: 'daily', options: opts(SEASONS) },
   { key: 'nearby', label: 'Что рядом с домом', type: 'multi', section: 'daily', options: opts(NEARBY) },
   { key: 'pet', label: 'Домашнее животное', type: 'select', section: 'daily', options: opts(PETS) },
@@ -560,13 +574,13 @@ export const DEFAULT_PROFILE: Profile = {
   benefits: ['taxes', 'spend', 'experience'],
   likeCy: ['climate', 'people', 'safety'],
   moveReasons: ['work', 'safety'],
-  greekWhere: 'teacher',
+  greekWhere: ['teacher'],
   visitHome: 'yearly',
   lastTripWhy: 'holiday',
   gesy: true,
   hasCar: true,
   cyLicense: true,
-  favPlace: 'troodos',
+  favPlace: ['troodos', 'akamas'],
   season: 'spring',
   nearby: ['supermarket', 'pharmacy', 'park'],
   pet: 'none',

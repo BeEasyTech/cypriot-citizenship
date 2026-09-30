@@ -671,10 +671,10 @@ export const TOPICS: Topic[] = [
         ),
         answer: (c) => {
           const y = c.year('greekSince', 'Год начала')
-          const w = c.pick(GREEK_WHERE, 'greekWhere')
+          const ws = c.picks(GREEK_WHERE, 'greekWhere')
           return [
             t(`Μαθαίνω ελληνικά από το ${y.gr}.`, `I have been learning Greek since ${y.en}.`, `Я учу греческий с ${y.ru} года.`),
-            ...(w ? [c.gt(w.t)] : []),
+            ...ws.map((w) => c.gt(w.t)),
             t('Καταλαβαίνω περισσότερα απ\' όσα μπορώ να πω.', 'I understand more than I can say.', 'Я понимаю больше, чем могу сказать.'),
           ]
         },
@@ -1104,7 +1104,15 @@ export const TOPICS: Topic[] = [
           if (!rs.length) return [triAll(hole('Причины'))]
           return rs.slice(0, 3).map((r, i) => {
             const o = ordinals[i]
-            return t(`${o.gr}, ${r.t.gr}.`, `${o.en}, ${r.t.en}.`, `${o.ru}, ${r.t.ru}.`)
+            let x = c.gt(r.t)
+            if (r.value === 'futureKids') {
+              // «…с женой / с мужем», если есть супруг(а); иначе «в будущем»
+              const sp = spouse(c)
+              x = isMarried(c)
+                ? t(`${x.gr} με ${sp.f ? 'τη γυναίκα' : 'τον άντρα'} μου`, `${x.en} with my ${sp.f ? 'wife' : 'husband'}`, x.ru.replace('мы планируем', `мы с ${sp.f ? 'женой' : 'мужем'} планируем`))
+                : t(`${x.gr.replace('θέλουμε να κάνουμε', 'θέλω να κάνω')} κάποια μέρα`, `${x.en.replace('we want', 'I want')} one day`, x.ru.replace('мы планируем', 'я хочу когда-нибудь завести'))
+            }
+            return t(`${o.gr}, ${x.gr}.`, `${o.en}, ${x.en}.`, `${o.ru}, ${x.ru}.`)
           })
         },
       },
@@ -1615,10 +1623,18 @@ export const TOPICS: Topic[] = [
           t('Πού σας αρέσει να πηγαίνετε στην Κύπρο;', 'Where do you like to go in Cyprus?', 'Куда вы любите ездить на Кипре?'),
         ),
         answer: (c) => {
-          const f = c.pick(FAV_PLACES, 'favPlace')
-          if (!f) return [triAll(hole('Любимое место'))]
-          const n = f.t.name
-          return [t(`Το αγαπημένο μου μέρος είναι ${n.gr}.`, `My favourite place is ${n.en}.`, `Моё любимое место — ${n.ru}.`), c.gt(f.t.why)]
+          const fs = c.picks(FAV_PLACES, 'favPlace')
+          if (!fs.length) return [triAll(hole('Любимое место'))]
+          const n = fs[0].t.name
+          const out = [t(`Το αγαπημένο μου μέρος είναι ${n.gr}.`, `My favourite place is ${n.en}.`, `Моё любимое место — ${n.ru}.`), c.gt(fs[0].t.why)]
+          const rest = fs.slice(1, 4).map((f) => f.t.name)
+          if (rest.length) {
+            const j = joinTri(rest)
+            const plural = rest.length > 1 || /^(?:τα|οι) /.test(rest[0].gr)
+            out.push(t(`Μου ${plural ? 'αρέσουν' : 'αρέσει'} επίσης ${j.gr}.`, `I also like ${j.en}.`, `Ещё из любимых мест — ${j.ru}.`))
+            if (rest.length === 1) out.push(c.gt(fs[1].t.why))
+          }
+          return out
         },
       },
       {

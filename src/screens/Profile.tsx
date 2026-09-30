@@ -1,5 +1,5 @@
 import { useMemo, useRef, useState } from 'react'
-import { ChevronRight, Settings as Gear, Download, Upload, Cloud, Send, Volume2 } from 'lucide-react'
+import { ChevronRight, Settings as Gear, Download, Upload, Cloud, Volume2 } from 'lucide-react'
 import { useStore } from '../store'
 import { useNav } from '../router'
 import { FIELDS, OPTIONAL_FIELDS, SECTIONS, isFieldFilled, isFieldVisible } from '../data/profile'
@@ -56,7 +56,6 @@ export function ProfileHome() {
       <Section title="Приложение">
         <List>
           <Row onClick={() => push({ name: 'settings' })}><Gear size={20} className="text-muted" /><span className="flex-1">Настройки, голос, синхронизация</span><ChevronRight size={18} className="text-muted" /></Row>
-          <Row onClick={() => push({ name: 'telegram' })}><Send size={20} className="text-muted" /><span className="flex-1">Telegram и установка на телефон</span><ChevronRight size={18} className="text-muted" /></Row>
         </List>
       </Section>
     </Screen>

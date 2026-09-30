@@ -125,10 +125,6 @@ export default function Home() {
           <Btn kind="soft" className="mt-1 w-full" onClick={() => s.setSettings({ onboarded: true })}>Понятно</Btn>
         </div>
       )}
-      <div className="h-4" />
-      <div className="text-center text-[12px] text-muted">
-        <button onClick={() => push({ name: 'telegram' })} className="underline-offset-2 active:underline">Как открыть в Telegram и установить на телефон</button>
-      </div>
     </Screen>
   )
 }

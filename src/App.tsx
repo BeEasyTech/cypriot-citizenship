@@ -10,7 +10,6 @@ import { TopicsList, TopicDetail } from './screens/Topics'
 import { EditItem, NewItem } from './screens/EditItem'
 import { VocabList, DeckDetail } from './screens/Vocab'
 import { ProfileHome, SectionForm, Settings } from './screens/Profile'
-import TelegramHelp from './screens/TelegramHelp'
 
 const TABS: { id: Tab; label: string; icon: typeof HomeIcon }[] = [
   { id: 'home', label: 'Главная', icon: HomeIcon },
@@ -43,7 +42,6 @@ export default function App() {
     case 'session': screen = <Session filter={r.filter} title={r.title} />; break
     case 'sim': screen = <Sim />; break
     case 'listen': screen = <Listen />; break
-    case 'telegram': screen = <TelegramHelp />; break
   }
 
   return (

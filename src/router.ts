@@ -14,7 +14,6 @@ export type Route =
   | { name: 'session'; filter?: SessionFilter; title?: string }
   | { name: 'sim' }
   | { name: 'listen' }
-  | { name: 'telegram' }
 
 interface Nav {
   stack: Route[]

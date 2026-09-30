@@ -8,6 +8,7 @@ import { FieldEditor } from '../ui/fields'
 import { useVoices, ttsSupported, speak, useCloud } from '../lib/tts'
 import { cloudAvailable } from '../lib/telegram'
 import { exportJson, importJson, syncNow, useSync } from '../sync'
+import Reminders from './Reminders'
 
 function useSectionFill() {
   const profile = useStore((s) => s.profile)
@@ -100,6 +101,10 @@ export function Settings() {
 
   return (
     <Screen title="Настройки">
+      <Section title="Напоминания">
+        <Reminders />
+      </Section>
+
       <Section title="Собеседование">
         <div className="card space-y-4 p-4">
           <label className="block">

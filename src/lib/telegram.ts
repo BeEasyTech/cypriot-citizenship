@@ -33,6 +33,7 @@ export interface TgWebApp {
   setHeaderColor?: (c: string) => void
   setBackgroundColor?: (c: string) => void
   openLink(url: string): void
+  requestWriteAccess?: (cb?: (granted: boolean) => void) => void
   onEvent(ev: string, cb: () => void): void
   BackButton: BackButton
   HapticFeedback: HapticFeedback

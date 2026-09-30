@@ -1,0 +1,37 @@
+# Локальная разработка: Postgres + сервер.
+#   docker compose up -d db          — только база (сервер запускаете через npm run dev)
+#   docker compose up --build        — база и сервер в контейнерах
+services:
+  db:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: greek
+    ports:
+      - '${DB_PORT:-5433}:5432'
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U postgres -d greek']
+      interval: 3s
+      timeout: 3s
+      retries: 20
+
+  server:
+    build: .
+    depends_on:
+      db:
+        condition: service_healthy
+    env_file:
+      - path: .env
+        required: false
+    environment:
+      DATABASE_URL: postgres://postgres:postgres@db:5432/greek
+      DATABASE_SSL: 'false'
+      PORT: 3000
+    ports:
+      - '3000:3000'
+
+volumes:
+  pgdata:

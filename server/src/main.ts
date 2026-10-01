@@ -7,6 +7,7 @@ import { getBotToken } from 'nestjs-telegraf'
 import type { Telegraf } from 'telegraf'
 import { AppModule } from './app.module'
 import { BotService } from './bot/bot.service'
+import * as Sentry from '@sentry/nestjs'
 
 const WEBHOOK_PATH = '/tg/webhook'
 
@@ -38,6 +39,13 @@ async function bootstrap() {
   let bot: Telegraf | undefined
   if (token) {
     bot = app.get<Telegraf>(getBotToken())
+    // Ошибка в обработчике не должна ронять вебхук (иначе Telegram будет повторять апдейт).
+    bot.catch(async (err, ctx) => {
+      log.error(`bot ${ctx.updateType}: ${(err as Error).message}`)
+      Sentry.captureException(err, { extra: { updateType: ctx.updateType } })
+      if (ctx.callbackQuery) await ctx.answerCbQuery('Что-то пошло не так, попробуйте ещё раз').catch(() => undefined)
+      else if (ctx.chat) await ctx.reply('Что-то пошло не так 😕 Попробуйте ещё раз чуть позже.').catch(() => undefined)
+    })
     // Секрет вебхука выводим из токена: не нужно хранить отдельно, Telegram пришлёт его в заголовке.
     const secretToken = createHash('sha256').update(`webhook:${token}`).digest('hex').slice(0, 48)
     app.use(bot.webhookCallback(WEBHOOK_PATH, { secretToken }))

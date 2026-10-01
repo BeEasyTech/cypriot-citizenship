@@ -6,7 +6,7 @@ import { createRequire } from 'node:module'
 const require = createRequire(import.meta.url)
 require('reflect-metadata')
 const { validateInitData } = require('../dist/auth/telegram-init-data.js')
-const { RemindersService } = require('../dist/reminders/reminders.service.js')
+const { RemindersService, reminderVariant, staleSnooze, inactiveDays } = require('../dist/reminders/reminders.service.js')
 const { localNow, daysUntil, countdownLine, weeklyText, reminderText } = require('../dist/reminders/texts.js')
 
 const TOKEN = '123456:TEST-token'
@@ -37,7 +37,7 @@ test('initData: устарела', () => {
 // Время: 2026-09-30, Никосия UTC+3
 const at = (hm) => new Date(`2026-09-30T${hm}:00+03:00`)
 const svc = new RemindersService({}, {}, {}, undefined)
-const u = (o = {}) => ({ remindEnabled: true, tz: 'Europe/Nicosia', remindTime: '19:00', eveningNudge: true, tgId: '1', tgBlocked: false, pushSubscriptions: [], lastActiveDate: null, lastRemindedDate: null, lastEveningDate: null, ...o })
+const u = (o = {}) => ({ remindEnabled: true, tz: 'Europe/Nicosia', remindTime: '19:00', eveningNudge: true, tgId: '1', tgBlocked: false, pushSubscriptions: [], lastActiveDate: '2026-09-29', createdAt: new Date('2026-09-01T10:00:00Z'), lastRemindedDate: null, lastEveningDate: null, ...o })
 
 test('localNow учитывает часовой пояс', () => {
   assert.deepEqual(localNow('Europe/Nicosia', at('23:30')), { date: '2026-09-30', hm: '23:30' })
@@ -99,4 +99,41 @@ test('текст итогов недели', () => {
   assert.match(t.html, /5 из 7/)
   assert.match(t.html, /Серия: 12 дней/)
   assert.match(t.html, /До собеседования: 34 дня/)
+})
+
+test('тихие часы: догоняющее напоминание ночью не шлём, своё время — уважаем', () => {
+  assert.equal(svc.dueKind(u(), at('22:45')), null) // 19:00 + догон, но уже тихие часы
+  assert.equal(svc.dueKind(u({ remindTime: '23:00' }), at('23:00')), 'main')
+  assert.equal(svc.dueKind(u({ remindTime: '23:00' }), at('23:20')), null)
+  assert.equal(svc.dueKind(u({ remindTime: '07:30' }), at('07:30')), 'main')
+})
+test('«через час» с прошлого дня или в тихие часы — устарело', () => {
+  const tz = 'Europe/Nicosia'
+  assert.equal(staleSnooze(u({ snoozeUntil: new Date('2026-09-29T23:30:00+03:00') }), at('19:00'), tz), true)
+  assert.equal(staleSnooze(u({ snoozeUntil: at('23:00') }), at('23:00'), tz), true)
+  assert.equal(staleSnooze(u({ snoozeUntil: at('20:00') }), at('19:30'), tz), false)
+  // устаревший snooze не мешает утреннему напоминанию
+  assert.equal(svc.dueKind(u({ snoozeUntil: new Date('2026-09-29T23:30:00+03:00') }), at('19:00')), 'main')
+})
+test('неактивность: 3+ дня — «возвращение» без вечернего, 14+ — тишина', () => {
+  const tz = 'Europe/Nicosia'
+  const back = u({ lastActiveDate: '2026-09-25' })
+  assert.equal(inactiveDays(back, '2026-09-30', tz), 5)
+  assert.equal(svc.dueKind(back, at('19:00')), 'main')
+  assert.equal(reminderVariant(back, '2026-09-30', tz), 'comeback')
+  assert.equal(svc.dueKind({ ...back, lastRemindedDate: '2026-09-30' }, at('21:00')), null)
+  const gone = u({ lastActiveDate: '2026-09-10' })
+  assert.equal(svc.dueKind(gone, at('19:00')), null)
+  assert.equal(svc.dueKind(gone, new Date('2026-10-04T12:00:00+03:00')), 'weekly') // итоги недели остаются
+})
+test('онбординг в первые три дня, если ещё не занимались', () => {
+  const tz = 'Europe/Nicosia'
+  const fresh = (d) => u({ lastActiveDate: null, createdAt: new Date(`${d}T09:00:00+03:00`) })
+  assert.equal(reminderVariant(fresh('2026-09-30'), '2026-09-30', tz), 'onboard1')
+  assert.equal(reminderVariant(fresh('2026-09-29'), '2026-09-30', tz), 'onboard2')
+  assert.equal(reminderVariant(fresh('2026-09-28'), '2026-09-30', tz), 'onboard3')
+  assert.equal(reminderVariant(fresh('2026-09-27'), '2026-09-30', tz), 'comeback')
+  assert.equal(reminderVariant(u(), '2026-09-30', tz), 'normal')
+  assert.match(reminderText('main', '2026-09-30', null, 'onboard1').html, /анкету/)
+  assert.match(reminderText('main', '2026-09-30', null, 'comeback').html, /\S/)
 })

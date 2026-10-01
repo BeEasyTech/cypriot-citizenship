@@ -45,6 +45,33 @@ export function phraseOfDay(date: string) {
 
 export type ReminderKind = 'main' | 'evening' | 'snooze'
 
+/** Вариант текста основного напоминания: онбординг в первые дни, «возвращение» после пропусков. */
+export type ReminderVariant = 'normal' | 'onboard1' | 'onboard2' | 'onboard3' | 'comeback'
+
+const ONBOARD: Record<'onboard1' | 'onboard2' | 'onboard3', string> = {
+  onboard1: '👋 С чего начать: заполните анкету (вкладка «Анкета») — за 5–10 минут приложение соберёт ваши личные ответы на греческом.',
+  onboard2: '🎙 Попробуйте симуляцию собеседования: вопросы звучат на слух, а вы отвечаете вслух. Это главный тренажёр перед экзаменом.',
+  onboard3: '🛟 Выучите фразы-спасатели — «Μπορείτε να επαναλάβετε;» и другие. Они выручат, если вопрос непонятен.',
+}
+
+const COMEBACK = [
+  '👋 Давно не виделись! Не страшно — начните с 5 минут: пара карточек, и привычка вернётся.',
+  '🌱 Перерыв — это нормально. Сегодня хватит одного вопроса в симуляции собеседования.',
+  '💡 Подберите удобное время напоминаний в /settings — так проще заниматься регулярно.',
+]
+
+/** Тихие часы: с 22:30 до 08:00 по местному времени. */
+export const QUIET_FROM = '22:30'
+export const QUIET_TO = '08:00'
+export function isQuiet(hm: string) {
+  const m = minutes(hm)
+  return m >= minutes(QUIET_FROM) || m < minutes(QUIET_TO)
+}
+
+/** Разница в днях между датами YYYY-MM-DD. */
+export const daysBetween = (from: string, to: string) =>
+  Math.round((Date.parse(to + 'T00:00:00Z') - Date.parse(from + 'T00:00:00Z')) / 86_400_000)
+
 const SNOOZE = '⏰ Как договаривались — напоминаю: пора позаниматься греческим!'
 
 export function ruPlural(n: number, one: string, few: string, many: string) {
@@ -68,8 +95,13 @@ export function countdownLine(days: number | null): string {
   return days <= 7 ? `${base} — финишная прямая: прогоните симуляцию и слабые вопросы.` : base
 }
 
-export function reminderText(kind: ReminderKind, date: string, daysLeft: number | null = null) {
-  const head = kind === 'snooze' ? SNOOZE : (kind === 'main' ? MAIN : EVENING)[dayIndex(date) % (kind === 'main' ? MAIN : EVENING).length]
+export function reminderText(kind: ReminderKind, date: string, daysLeft: number | null = null, variant: ReminderVariant = 'normal') {
+  const pick = (xs: string[]) => xs[dayIndex(date) % xs.length]
+  const head = kind === 'snooze' ? SNOOZE
+    : kind === 'evening' ? pick(EVENING)
+    : variant === 'normal' ? pick(MAIN)
+    : variant === 'comeback' ? pick(COMEBACK)
+    : ONBOARD[variant]
   const p = phraseOfDay(date)
   const cd = countdownLine(daysLeft)
   return {

@@ -18,6 +18,7 @@ import { RemindersService } from './reminders/reminders.service'
 import { ApiController } from './api/api.controller'
 import { BotService } from './bot/bot.service'
 import { BotUpdate } from './bot/bot.update'
+import { dedupeUpdates } from './bot/dedupe'
 
 @Controller()
 class HealthController {
@@ -37,6 +38,7 @@ const botImports: DynamicModule[] = botEnabled
       useFactory: (cfg: ConfigService) => ({
         token: cfg.getOrThrow<string>('TELEGRAM_BOT_TOKEN'),
         launchOptions: false,
+        middlewares: [dedupeUpdates],
         // Для тестов можно направить бота на мок Bot API.
         ...(cfg.get('TELEGRAM_API_ROOT') ? { options: { telegram: { apiRoot: cfg.get<string>('TELEGRAM_API_ROOT') } } } : {}),
       }),

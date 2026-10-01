@@ -60,6 +60,10 @@ export class User {
   @Column({ name: 'interview_date', type: 'date', nullable: true })
   interviewDate: string | null
 
+  /** message_id последнего напоминания с кнопками — чтобы убрать кнопки, когда придёт следующее. */
+  @Column({ name: 'tg_reminder_msg_id', type: 'int', nullable: true })
+  tgReminderMsgId: number | null
+
   /** Пользователь заблокировал бота — сообщения не шлём. */
   @Column({ name: 'tg_blocked', type: 'boolean', default: false })
   tgBlocked: boolean

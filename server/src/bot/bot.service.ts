@@ -90,7 +90,6 @@ export class BotService {
       { command: 'time', description: 'Время напоминания, например /time 19:30' },
       { command: 'on', description: 'Включить напоминания' },
       { command: 'off', description: 'Выключить напоминания' },
-      { command: 'status', description: 'Текущие настройки' },
     ])
     if (this.webAppUrl.startsWith('https://')) {
       await t.setChatMenuButton({ menuButton: { type: 'web_app', text: 'Тренажёр', web_app: { url: this.webAppUrl } } })

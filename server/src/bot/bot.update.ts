@@ -24,7 +24,6 @@ const HELP = [
   '/settings — настройки напоминаний кнопками',
   '/time 19:30 — изменить время напоминания',
   '/off — выключить напоминания, /on — включить',
-  '/status — текущие настройки',
 ].join('\n')
 
 @Update()
@@ -115,7 +114,7 @@ export class BotUpdate {
     await ctx.reply(u.eveningNudge ? '🌙 Вечернее напоминание включено (в 21:00, если не занимались).' : '🌙 Вечернее напоминание выключено.')
   }
 
-  @Command(['settings', 'status'])
+  @Command('settings')
   async settings(@Ctx() ctx: Context) {
     const u = await this.me(ctx)
     const last = u.lastActiveDate ? `\n📅 Последнее занятие: ${u.lastActiveDate}` : '\n📅 Занятий пока не было'

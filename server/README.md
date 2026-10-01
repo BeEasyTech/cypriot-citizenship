@@ -1,30 +1,49 @@
 # Сервер тренажёра (NestJS)
 
-Telegram-бот, ежедневные напоминания и Web Push для PWA. Анкета и ответы сюда не попадают:
-сервер хранит только настройки напоминаний, дату собеседования и числа занятий за день
-(карточки, вопросы симуляции, квиз, минуты).
+Telegram-бот, ежедневные напоминания и Web Push для PWA.
 
-- **Бот** (`nestjs-telegraf`, вебхук): `/start`, `/time 19:30`, `/on`, `/off`, `/evening`, `/status`, `/stats` (только для `ADMIN_TG_IDS`).
-  Под напоминанием — кнопки «⏰ Через час», «✅ Уже позанимался(ась)», «🔕 Сегодня не надо».
-- **Напоминания** (`@nestjs/schedule`, каждую минуту): в выбранное время по часовому поясу пользователя,
-  если сегодня ещё не занимались; вечером в 21:00 — «ещё не поздно» (можно выключить).
-  В напоминаниях — «До собеседования N дней»; по воскресеньям в 12:00 — итоги недели (дни, карточки, минуты, серия).
-- **Web Push**: VAPID-ключи генерируются при первом запуске и хранятся в БД.
-- **Авторизация**: Mini App — `Authorization: tma <initData>` (проверка подписи); PWA — `X-Device-Id: <uuid>`.
+**Анкета и ответы сюда не попадают.** Сервер хранит только:
+- настройки напоминаний и часовой пояс;
+- дату собеседования;
+- числа занятий за день: карточки, вопросы симуляции, квиз, минуты;
+- Telegram id и имя (для бота) или анонимный id устройства (для PWA);
+- push-подписки.
 
-## Локально
+Стек: NestJS 11, TypeORM 0.3 + Postgres, `nestjs-telegraf` (Telegraf 4), `@nestjs/schedule`, `web-push`, Sentry (по желанию).
 
-```bash
-cp .env.example .env          # впишите TELEGRAM_BOT_TOKEN, если нужен бот
-docker compose up -d db       # Postgres на localhost:5433
-npm install
-npm run dev                   # http://localhost:3000, без PUBLIC_URL бот работает через polling
-npm test                      # проверки подписи Telegram и расписания напоминаний
-```
+---
 
-Или всё в контейнерах: `docker compose up --build`.
+## Что умеет
 
-Во фронтенде укажите адрес API в `.env.local`: `VITE_API_URL=http://localhost:3000`.
+### Бот
+| Команда | Что делает |
+|---|---|
+| `/start` | приветствие, кнопка «📱 Открыть тренажёр», текущее время напоминания |
+| `/time 19:30` | время напоминания (также `/time 9`, `/time 9.30`) |
+| `/on`, `/off` | включить или выключить напоминания |
+| `/evening` | вечернее «ещё не поздно» в 21:00: вкл/выкл |
+| `/status` | текущие настройки и дата последнего занятия |
+| `/stats` | статистика для владельца (id из `ADMIN_TG_IDS`) |
+
+При старте сервер сам регистрирует вебхук, список команд и кнопку меню «Тренажёр» (если `WEBAPP_URL` — https). Если пользователь заблокировал бота, сервер это помечает и больше ему не пишет. Если пользователь снова нажмёт `/start`, отметка снимается.
+
+### Напоминания (крон каждую минуту)
+- **Основное** — в `remindTime` по часовому поясу пользователя, если сегодня ещё не занимался. Если сервер перезапускался, напоминание досылается в течение 3 часов после назначенного времени.
+- **Вечернее** — в 21:00, если основное уже отправлено, а занятия так и не было (отключается через `eveningNudge`).
+- **Отложенное** — через час после кнопки «⏰ Через час». Пока его ждём, вечернее не отправляется.
+- **Итоги недели** — по воскресеньям в 12:00 (в течение 6 часов), только тем, кто хоть раз занимался.
+- В каждом напоминании: фраза дня и «📅 До собеседования N дней», если дата задана.
+- Кнопки под напоминанием в Telegram:
+  - «⏰ Через час» — `snoozeUntil = +1 ч`;
+  - «✅ Уже позанимался(ась)» — сегодня больше не напоминать;
+  - «🔕 Сегодня не надо» — отключить и основное, и вечернее до конца дня.
+- Каналы доставки: сообщение в Telegram (если есть `tgId` и бот не заблокирован) и push на все устройства пользователя. Недействительные push-подписки (404/410) удаляются.
+
+### Авторизация
+- **Telegram Mini App:** `Authorization: tma <initData>`. Подпись проверяется токеном бота, срок действия — 7 дней.
+- **PWA:** `X-Device-Id: <uuid v4>` — случайный id, созданный на устройстве.
+
+---
 
 ## API
 
@@ -32,18 +51,102 @@ npm test                      # проверки подписи Telegram и ра
 |---|---|---|
 | GET | `/health` | проверка живости |
 | GET | `/api/push/vapid` | публичный VAPID-ключ |
-| GET/PATCH | `/api/me` | настройки напоминаний (`remindEnabled`, `remindTime`, `eveningNudge`, `tz`) |
-| POST | `/api/activity` | `{ date, cards, sims, listen, minutes, interviewDate }` — числа за день |
-| POST/DELETE | `/api/push/subscribe` | подписка устройства на push |
-| POST | `/api/reminders/test` | прислать тестовое напоминание |
-| POST | `/tg/webhook` | вебхук Telegram (с секретным заголовком) |
+| GET | `/api/me` | настройки напоминаний текущего пользователя |
+| PATCH | `/api/me` | `{ remindEnabled?, remindTime?: 'HH:MM', eveningNudge?, tz? }` |
+| POST | `/api/activity` | `{ date: 'YYYY-MM-DD', tz?, cards?, sims?, listen?, minutes?, interviewDate? }` — накопительные числа за день (сохраняется максимум) |
+| POST | `/api/push/subscribe` | `{ endpoint, keys: { p256dh, auth } }` |
+| DELETE | `/api/push/subscribe` | `{ endpoint }` |
+| POST | `/api/reminders/test` | прислать тестовое напоминание сейчас |
+| POST | `/tg/webhook` | вебхук Telegram (секрет в заголовке `X-Telegram-Bot-Api-Secret-Token`) |
+
+Все `/api/*`, кроме `vapid`, требуют авторизации. CORS разрешён только для `WEBAPP_URL` и `ALLOWED_ORIGINS`.
+
+---
+
+## Модель данных
+
+| Таблица | Что хранит |
+|---|---|
+| `users` | `tg_id` / `device_id`, `tz`, `remind_enabled`, `remind_time`, `evening_nudge`, `interview_date`, `last_active_date`, `last_reminded_date`, `last_evening_date`, `last_weekly_date`, `snooze_until`, `tg_blocked` |
+| `daily_activity` | (`user_id`, `date`) → `cards`, `sims`, `listen`, `minutes` |
+| `push_subscriptions` | `endpoint`, `p256dh`, `auth`, `user_id` |
+| `app_settings` | служебные значения (сгенерированные VAPID-ключи) |
+
+Миграции лежат в `src/migrations/` и применяются автоматически при старте (`migrationsRun: true`). Чтобы добавить новую, создайте класс миграции и подключите его в `src/data-source.ts`.
+
+---
+
+## Локально
+
+```bash
+cp .env.example .env          # TELEGRAM_BOT_TOKEN — если нужен бот
+docker compose up -d db       # Postgres 17 на localhost:5433 (порт меняется через DB_PORT)
+npm install
+npm run dev                   # сборка и запуск, http://localhost:3000
+npm test                      # автотесты
+```
+
+- Без `PUBLIC_URL` (и вне Railway) бот работает через **polling**, поэтому вебхук для локального запуска не нужен.
+- Всё в контейнерах: `docker compose up --build`.
+- Во фронтенде укажите `VITE_API_URL=http://localhost:3000` в `.env.local`.
+- `TELEGRAM_API_ROOT` направляет бота на другой адрес Bot API. Это нужно только для тестов: `test/mock-telegram.mjs` — простой мок, который пишет вызовы в stdout.
+
+### Тесты (`npm test`)
+`test/logic.test.mjs` работает без базы и проверяет:
+- подпись Telegram `initData`: верная, чужой токен, подмена, устаревшая;
+- часовые пояса;
+- расписание: время, «уже занимался», вечернее, догон после перезапуска, «через час», итоги недели;
+- тексты обратного отсчёта и итогов.
+
+---
+
+## Переменные окружения
+
+| Переменная | Обязательно | Описание |
+|---|---|---|
+| `DATABASE_URL` | да | строка подключения к Postgres |
+| `DATABASE_SSL` | нет | `false` — отключить SSL (локально и во внутренней сети Railway отключается автоматически) |
+| `TELEGRAM_BOT_TOKEN` | для бота | без него бот выключен, API и push работают |
+| `WEBAPP_URL` | да | адрес фронтенда: кнопка Mini App и CORS |
+| `PUBLIC_URL` | нет | адрес сервера для вебхука; на Railway берётся `RAILWAY_PUBLIC_DOMAIN` |
+| `ALLOWED_ORIGINS` | нет | дополнительные origin для CORS через запятую |
+| `ADMIN_TG_IDS` | нет | Telegram id владельцев через запятую — доступ к `/stats` |
+| `SENTRY_DSN` | нет | Sentry: в события не попадают тела запросов, заголовки и cookies |
+| `VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`, `VAPID_SUBJECT` | нет | если не заданы, ключи генерируются при первом старте и хранятся в `app_settings` |
+| `PORT` | нет | по умолчанию 3000 |
+
+---
 
 ## Деплой на Railway
 
-1. New Project → Deploy from GitHub repo, **Root Directory: `server`** (сборка по `Dockerfile`, настройки в `railway.json`).
-2. Add → Database → **PostgreSQL**. В сервисе сервера добавьте переменную `DATABASE_URL=${{Postgres.DATABASE_URL}}`.
-3. Переменные сервиса: `TELEGRAM_BOT_TOKEN`, `WEBAPP_URL` (адрес фронтенда на Vercel), `ADMIN_TG_IDS` (ваш Telegram id для `/stats`), по желанию `SENTRY_DSN`.
-4. Settings → Networking → **Generate Domain**. Railway передаст его в `RAILWAY_PUBLIC_DOMAIN`, и сервер сам зарегистрирует вебхук.
+1. New Project → Deploy from GitHub repo, **Root Directory: `server`**. Сборка по `Dockerfile`, настройки в `railway.json`: healthcheck `/health`, одна реплика.
+2. Add → Database → **PostgreSQL**. В сервисе сервера: `DATABASE_URL=${{Postgres.DATABASE_URL}}`.
+3. Задайте `TELEGRAM_BOT_TOKEN`, `WEBAPP_URL`, `ADMIN_TG_IDS` и по желанию `SENTRY_DSN`.
+4. Settings → Networking → **Generate Domain**. Сервер сам зарегистрирует вебхук.
 5. Во фронтенде (Vercel) задайте `VITE_API_URL=https://<домен сервера>` и передеплойте.
 
-Миграции применяются автоматически при старте. Реплика должна быть одна — иначе напоминания задублируются.
+**Реплика должна быть одна**: крон работает внутри процесса, и при двух репликах напоминания будут приходить дважды.
+
+---
+
+## Структура
+
+```
+src/
+  main.ts                    запуск: CORS, валидация, вебхук или polling, настройка бота
+  instrument.ts              Sentry (до остального кода)
+  app.module.ts              модули; бот подключается, только если есть токен
+  data-source.ts             настройки TypeORM (общие для приложения и CLI)
+  entities/                  User, DailyActivity, PushSubscription, AppSetting
+  migrations/                миграции схемы
+  auth/                      проверка initData и guard авторизации
+  users/                     пользователи и часовые пояса
+  activity/                  статистика за день, серия, итоги недели
+  reminders/                 крон, расписание (dueKind), тексты
+  push/                      VAPID и отправка Web Push
+  bot/                       команды бота и кнопки под напоминанием
+  api/                       HTTP API и DTO
+test/
+  logic.test.mjs             автотесты
+  mock-telegram.mjs          мок Telegram Bot API для ручных проверок
+```

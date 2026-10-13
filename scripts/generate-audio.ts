@@ -11,6 +11,7 @@
  *   --me=m,f                           голоса для слов и ответов (по умолчанию оба)
  *   --examiner=m                       голоса экзаменатора для вопросов (по умолчанию мужской)
  *   --limit=N                          сгенерировать не больше N новых файлов (для пробы)
+ *   --concurrency=2                    параллельных запросов (лимит тарифа ElevenLabs: Free/Starter — 2)
  *
  * Переменные (из окружения или .env.local): ELEVENLABS_API_KEY, ELEVENLABS_MODEL,
  * ELEVENLABS_VOICE_MALE, ELEVENLABS_VOICE_FEMALE — те же, что на сервере, чтобы голоса совпадали.
@@ -35,6 +36,7 @@ const GROUPS = (args.groups ?? 'vocab,questions,answers').split(',')
 const ME = (args.me ?? 'm,f').split(',') as VoiceLetter[]
 const EXAMINER = (args.examiner ?? 'm').split(',') as VoiceLetter[]
 const LIMIT = args.limit ? Number(args.limit) : Infinity
+const CONCURRENCY = Math.max(1, Number(args.concurrency ?? 2))
 const LIST = args.list // --list=answers — вывести тексты группы (для проверки)
 
 const MODEL = process.env.ELEVENLABS_MODEL || 'eleven_multilingual_v2'
@@ -167,8 +169,9 @@ async function synth(j: Job, attempt = 1): Promise<Buffer> {
       voice_settings: { stability: 0.5, similarity_boost: 0.75, speed: 1 },
     }),
   })
-  if ((res.status === 429 || res.status >= 500) && attempt < 5) {
-    await new Promise((r) => setTimeout(r, 1500 * attempt))
+  // 429 — превышен лимит параллельных запросов или частоты: ждём и повторяем (до ~1 минуты суммарно).
+  if ((res.status === 429 || res.status >= 500) && attempt < 8) {
+    await new Promise((r) => setTimeout(r, 1000 * 2 ** Math.min(attempt, 5) + Math.random() * 500))
     return synth(j, attempt + 1)
   }
   if (!res.ok) throw new Error(`${res.status} ${(await res.text()).slice(0, 300)}`)
@@ -177,6 +180,7 @@ async function synth(j: Job, attempt = 1): Promise<Buffer> {
 
 let done = 0
 let failed = 0
+let hinted = false
 const queue = [...todo]
 async function worker() {
   for (;;) {
@@ -190,11 +194,17 @@ async function worker() {
     } catch (e) {
       failed++
       console.error(`✗ ${j.group}/${j.voice} «${j.text.slice(0, 40)}»: ${(e as Error).message}`)
-      if (/quota|credits|401|403/i.test((e as Error).message)) queue.length = 0 // кончились кредиты или неверный ключ
+      const msg = (e as Error).message
+      if (/quota|credits|401|403/i.test(msg)) queue.length = 0 // кончились кредиты, неверный ключ или аккаунт ограничен
+      if (/detected_unusual_activity/.test(msg) && !hinted) {
+        hinted = true
+        console.error('\n⚠ ElevenLabs отключил бесплатный тариф для этого аккаунта (подозрение на VPN/прокси или несколько бесплатных аккаунтов).'
+          + '\n  Нужен платный тариф (Starter) либо обращение в поддержку ElevenLabs, если это ошибка. Готовые файлы сохранены — запуск продолжится с места остановки.\n')
+      }
     }
   }
 }
-await Promise.all([worker(), worker(), worker()])
+await Promise.all(Array.from({ length: CONCURRENCY }, () => worker()))
 const total = writeManifest()
 console.log(`Готово: +${done}, ошибок: ${failed}. Всего файлов в манифесте: ${total}.`)
 if (failed) process.exitCode = 1

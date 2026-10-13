@@ -1,6 +1,7 @@
 import { useEffect, useState, useSyncExternalStore } from 'react'
 import { create } from 'zustand'
-import { HOLE_RE } from './grammar'
+import { api, apiEnabled } from './api'
+import { audioKeySource, cleanForSpeech, KEY_LENGTH, type AudioManifest, type VoiceLetter } from './audio-key'
 
 export type Lang = 'el' | 'en' | 'ru'
 const LOCALE: Record<Lang, string> = { el: 'el-GR', en: 'en-US', ru: 'ru-RU' }
@@ -41,33 +42,45 @@ function pickVoice(lang: Lang, preferred?: string) {
   return list.find((v) => /premium|enhanced|natural|neural/i.test(v.name)) ?? list.find((v) => v.localService) ?? list[0]
 }
 
-export const clean = (s: string) => s.replace(HOLE_RE, ' … ').replace(/[«»"]/g, '').replace(/\s+/g, ' ').trim()
+export const clean = cleanForSpeech
 
-/* ------------------------------------------------ облачный голос (Azure через /api/tts) */
+/* ------------------------------------------------ облачные голоса ElevenLabs
+ * 1) готовые файлы /audio/<ключ>.mp3 (слова, фразы, вопросы — сгенерированы заранее);
+ * 2) наш сервер POST /api/tts (личные ответы; ключ ElevenLabs только на сервере);
+ * 3) иначе — голос браузера.
+ */
 
 interface CloudCfg {
-  /** Доступен ли сервер с ключом. null — ещё не проверяли. */
+  /** Есть ли хоть какой-то облачный звук (готовые файлы или сервер). null — ещё не проверяли. */
   available: boolean | null
+  /** Готовые файлы из манифеста. */
+  staticKeys: Set<string>
+  /** Сервер умеет озвучивать на лету. */
+  server: boolean
   /** Включено ли в настройках. */
   enabled: boolean
-  examiner: 'm' | 'f'
-  me: 'm' | 'f'
+  examiner: VoiceLetter
+  me: VoiceLetter
 }
 
-export const useCloud = create<CloudCfg>(() => ({ available: null, enabled: true, examiner: 'm', me: 'f' }))
+export const useCloud = create<CloudCfg>(() => ({
+  available: null, staticKeys: new Set(), server: false, enabled: true, examiner: 'm', me: 'f',
+}))
 
 export async function probeCloud() {
-  try {
-    const r = await fetch('/api/tts?ping=1', { cache: 'no-store' })
-    const j = r.ok ? await r.json() : null
-    useCloud.setState({ available: !!j?.configured })
-  } catch {
-    useCloud.setState({ available: false })
-  }
+  const [manifest, server] = await Promise.all([
+    fetch('/audio/manifest.json', { cache: 'no-cache' }).then((r) => (r.ok ? (r.json() as Promise<AudioManifest>) : null)).catch(() => null),
+    apiEnabled ? api.ttsStatus().then((s) => s.configured).catch(() => false) : Promise.resolve(false),
+  ])
+  const staticKeys = new Set(manifest?.keys ?? [])
+  useCloud.setState({ staticKeys, server, available: staticKeys.size > 0 || server })
 }
 
-const cloudUrl = (text: string, voice: 'm' | 'f', rate: number) =>
-  `/api/tts?v=${voice}&r=${(Math.round(rate * 20) / 20).toFixed(2)}&t=${encodeURIComponent(clean(text))}`
+async function keyOf(voice: VoiceLetter, text: string) {
+  const bytes = new TextEncoder().encode(audioKeySource(voice, text))
+  const hash = await crypto.subtle.digest('SHA-1', bytes)
+  return [...new Uint8Array(hash)].map((b) => b.toString(16).padStart(2, '0')).join('').slice(0, KEY_LENGTH)
+}
 
 /** Одно общее аудио: на iOS его достаточно «разблокировать» первым касанием. */
 let audio: HTMLAudioElement | undefined
@@ -85,32 +98,41 @@ if (typeof window !== 'undefined') {
 
 const useCloudFor = (lang: Lang) => {
   const c = useCloud.getState()
-  return lang === 'el' && c.enabled && c.available === true && navigator.onLine !== false
+  return lang === 'el' && c.enabled && c.available === true
 }
 
 /* Кеш звука: Cache Storage (переживает перезапуск, работает офлайн) + blob-URL в памяти. */
-const CACHE = 'tts-v1'
+const CACHE = 'tts-v2'
 const blobs = new Map<string, string>()
 const inflight = new Map<string, Promise<string>>()
 
-async function loadAudio(url: string): Promise<string> {
-  const hit = blobs.get(url)
+/** Получить blob-URL звука: из памяти → Cache Storage → готовый файл или сервер. */
+async function loadAudio(voice: VoiceLetter, text: string): Promise<string> {
+  const key = await keyOf(voice, text)
+  const hit = blobs.get(key)
   if (hit) return hit
-  const pending = inflight.get(url)
+  const pending = inflight.get(key)
   if (pending) return pending
   const p = (async () => {
-    let res: Response | undefined
+    const { staticKeys, server } = useCloud.getState()
+    const isStatic = staticKeys.has(key)
+    // Для личных фраз в кеш кладём под служебным адресом — сам текст в URL не попадает.
+    const cacheUrl = isStatic ? `/audio/${key}.mp3` : `/__tts/${key}.mp3`
     const cache = typeof caches !== 'undefined' ? await caches.open(CACHE).catch(() => undefined) : undefined
-    res = await cache?.match(url)
+    let res = await cache?.match(cacheUrl)
     if (!res) {
-      const ctrl = new AbortController()
-      const t = setTimeout(() => ctrl.abort(), 10000)
-      try { res = await fetch(url, { signal: ctrl.signal }) } finally { clearTimeout(t) }
-      if (!res.ok || !(res.headers.get('content-type') ?? '').includes('audio')) throw new Error(`tts ${res.status}`)
-      await cache?.put(url, res.clone()).catch(() => undefined)
+      if (isStatic) {
+        res = await fetch(cacheUrl)
+        if (!res.ok) throw new Error(`audio ${res.status}`)
+      } else if (server && navigator.onLine !== false) {
+        res = new Response(await api.tts(cleanForSpeech(text), voice), { headers: { 'content-type': 'audio/mpeg' } })
+      } else {
+        throw new Error('нет облачного звука для этой фразы')
+      }
+      await cache?.put(cacheUrl, res.clone()).catch(() => undefined)
     }
     const obj = URL.createObjectURL(await res.blob())
-    blobs.set(url, obj)
+    blobs.set(key, obj)
     if (blobs.size > 400) {
       const [k, v] = blobs.entries().next().value as [string, string]
       URL.revokeObjectURL(v)
@@ -118,15 +140,15 @@ async function loadAudio(url: string): Promise<string> {
     }
     return obj
   })()
-  inflight.set(url, p)
-  try { return await p } finally { inflight.delete(url) }
+  inflight.set(key, p)
+  try { return await p } finally { inflight.delete(key) }
 }
 
 /** Прогреть кеш: скачать звук заранее (например, следующую карточку). */
-export function prefetch(texts: string[], role: Role = 'me', rate = 0.9) {
+export function prefetch(texts: string[], role: Role = 'me') {
   const c = useCloud.getState()
   if (!(c.enabled && c.available)) return
-  for (const t of texts) if (clean(t)) loadAudio(cloudUrl(t, c[role], rate)).catch(() => undefined)
+  for (const t of texts) if (cleanForSpeech(t)) loadAudio(c[role], t).catch(() => undefined)
 }
 
 /* ------------------------------------------------ общий плеер */
@@ -181,7 +203,7 @@ function speakBrowser(text: string, o: SpeakOpts, id: number): Promise<void> {
 async function speakCloud(text: string, o: SpeakOpts, id: number): Promise<boolean> {
   const c = useCloud.getState()
   let src: string
-  try { src = await loadAudio(cloudUrl(text, c[o.role ?? 'me'], o.rate ?? 0.9)) } catch { return false }
+  try { src = await loadAudio(c[o.role ?? 'me'], text) } catch { return false }
   if (id !== speakingId) return true // пока грузили, пользователь нажал другое
   const a = getAudio()
   return new Promise((resolve) => {
@@ -196,6 +218,9 @@ async function speakCloud(text: string, o: SpeakOpts, id: number): Promise<boole
     a.onended = () => done(true)
     a.onerror = () => done(false)
     a.src = src
+    // Звук сгенерирован с обычной скоростью — темп пользователя задаём при воспроизведении.
+    a.preservesPitch = true
+    a.playbackRate = Math.min(1.5, Math.max(0.5, o.rate ?? 0.9))
     a.play().catch(() => done(false))
   })
 }

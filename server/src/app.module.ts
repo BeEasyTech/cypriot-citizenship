@@ -19,6 +19,8 @@ import { ApiController } from './api/api.controller'
 import { BotService } from './bot/bot.service'
 import { BotUpdate } from './bot/bot.update'
 import { dedupeUpdates } from './bot/dedupe'
+import { TtsService } from './tts/tts.service'
+import { TtsController } from './tts/tts.controller'
 
 @Controller()
 class HealthController {
@@ -54,7 +56,7 @@ const botImports: DynamicModule[] = botEnabled
     TypeOrmModule.forFeature([User, PushSubscription, AppSetting, DailyActivity]),
     ...botImports,
   ],
-  controllers: [HealthController, ApiController],
+  controllers: [HealthController, ApiController, TtsController],
   providers: [
     { provide: APP_FILTER, useClass: SentryGlobalFilter },
     UsersService,
@@ -62,6 +64,7 @@ const botImports: DynamicModule[] = botEnabled
     PushService,
     RemindersService,
     ActivityService,
+    TtsService,
     ...(botEnabled ? [BotService, BotUpdate] : []),
   ],
 })

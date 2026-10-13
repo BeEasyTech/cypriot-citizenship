@@ -1,6 +1,6 @@
 # Сервер тренажёра (NestJS)
 
-Telegram-бот, ежедневные напоминания и Web Push для PWA.
+Telegram-бот, ежедневные напоминания, Web Push для PWA и озвучка личных ответов (ElevenLabs).
 
 **Анкета и ответы сюда не попадают.** Сервер хранит только:
 - настройки напоминаний и часовой пояс;
@@ -68,6 +68,8 @@ Telegram-бот, ежедневные напоминания и Web Push для 
 | POST | `/api/push/subscribe` | `{ endpoint, keys: { p256dh, auth } }` |
 | DELETE | `/api/push/subscribe` | `{ endpoint }` |
 | POST | `/api/reminders/test` | прислать тестовое напоминание сейчас |
+| GET | `/api/tts/status` | настроена ли озвучка (`{ configured }`) |
+| POST | `/api/tts` | `{ text (≤500), voice: 'm' \| 'f' }` → `audio/mpeg` (ElevenLabs). Лимит 300 новых фраз в сутки на пользователя, кеш только в памяти |
 | POST | `/tg/webhook` | вебхук Telegram (секрет в заголовке `X-Telegram-Bot-Api-Secret-Token`) |
 
 Все `/api/*`, кроме `vapid`, требуют авторизации. CORS разрешён только для `WEBAPP_URL` и `ALLOWED_ORIGINS`.
@@ -123,6 +125,9 @@ npm test                      # автотесты
 | `PUBLIC_URL` | нет | адрес сервера для вебхука; на Railway берётся `RAILWAY_PUBLIC_DOMAIN` |
 | `ALLOWED_ORIGINS` | нет | дополнительные origin для CORS через запятую |
 | `ADMIN_TG_IDS` | нет | Telegram id владельцев через запятую — доступ к `/stats` |
+| `ELEVENLABS_API_KEY` | для озвучки ответов | ключ ElevenLabs; без него `/api/tts` отвечает 503, а приложение использует готовый звук и голос браузера |
+| `ELEVENLABS_MODEL` | нет | по умолчанию `eleven_multilingual_v2` |
+| `ELEVENLABS_VOICE_MALE`, `ELEVENLABS_VOICE_FEMALE` | нет | `voice_id` голосов (по умолчанию George / Sarah); должны совпадать с теми, что использовались для готового звука |
 | `SENTRY_DSN` | нет | Sentry: в события не попадают тела запросов, заголовки и cookies |
 | `VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`, `VAPID_SUBJECT` | нет | если не заданы, ключи генерируются при первом старте и хранятся в `app_settings` |
 | `PORT` | нет | по умолчанию 3000 |
@@ -158,6 +163,7 @@ src/
   push/                      VAPID и отправка Web Push
   bot/                       команды, меню /settings, кнопки под напоминанием, dedupe, экранирование
   api/                       HTTP API и DTO
+  tts/                       озвучка ElevenLabs для личных фраз
 test/
   logic.test.mjs             автотесты
   mock-telegram.mjs          мок Telegram Bot API для ручных проверок

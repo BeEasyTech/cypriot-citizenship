@@ -63,6 +63,17 @@ export const api = {
   subscribe: (s: PushSubscriptionJSON) => call<void>('POST', '/api/push/subscribe', { endpoint: s.endpoint, keys: s.keys }),
   unsubscribe: (endpoint: string) => call<void>('DELETE', '/api/push/subscribe', { endpoint }),
   test: () => call<{ telegram: boolean; push: number }>('POST', '/api/reminders/test'),
+  ttsStatus: () => call<{ configured: boolean }>('GET', '/api/tts/status'),
+  /** Озвучить фразу на сервере (ElevenLabs). Текст — в теле запроса, не в URL. */
+  tts: async (text: string, voice: 'm' | 'f'): Promise<Blob> => {
+    const res = await fetch(`${API_URL}/api/tts`, {
+      method: 'POST',
+      headers: { ...authHeaders(), 'Content-Type': 'application/json' },
+      body: JSON.stringify({ text, voice }),
+    })
+    if (!res.ok || !(res.headers.get('content-type') ?? '').includes('audio')) throw new Error(`tts ${res.status}`)
+    return res.blob()
+  },
 }
 
 /* ------------------------------------------------ Web Push */

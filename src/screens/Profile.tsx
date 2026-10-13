@@ -28,6 +28,9 @@ export function ProfileHome() {
   const total = Object.values(fill).reduce((a, [x, y]) => [a[0] + x, a[1] + y], [0, 0])
   const pct = total[1] ? total[0] / total[1] : 0
   const inTg = cloudAvailable()
+  const ttsServer = useCloud((c) => c.server)
+  const cloudTts = useStore((s) => s.settings.cloudTts)
+  const voiceOnline = ttsServer && cloudTts
 
   return (
     <Screen title="Анкета" subtitle="Из неё собираются ваши ответы" back={false}
@@ -44,9 +47,10 @@ export function ProfileHome() {
         <div>
           <div className="font-semibold text-ok">Ваши данные — только у вас</div>
           <div className="mt-0.5 text-fg/80">
-            Анкета и ответы хранятся на этом устройстве и <b>не отправляются на наш сервер</b>.
+            Анкета и ответы хранятся на этом устройстве и <b>не сохраняются на нашем сервере</b>.
             {inTg ? ' В Telegram они синхронизируются между вашими устройствами через ваше личное облако Telegram.' : ''}
             {' '}Серверу напоминаний известны только настройки напоминаний, дата собеседования и сколько вы занимались (числа).
+            {voiceOnline ? ' Для озвучки ваших ответов их текст передаётся через сервер в ElevenLabs и нигде не сохраняется.' : ''}
           </div>
         </div>
       </div>
@@ -209,7 +213,7 @@ export function Settings() {
             }} />
           </div>
           {msg && <div className="text-[14px] text-muted">{msg}</div>}
-          <div className="text-[12px] text-muted">Анкета и ответы хранятся на устройстве и не отправляются на наш сервер; в Telegram — синхронизируются через ваше личное облако Telegram. Серверу напоминаний известны только настройки напоминаний, дата собеседования и числа занятий за день. Для статистики посещений используется анонимная Vercel Analytics. Если включить облачную озвучку Azure, озвучиваемый текст (в том числе ваши ответы) отправляется в Azure для синтеза речи.</div>
+          <div className="text-[12px] text-muted">Анкета и ответы хранятся на устройстве и не отправляются на наш сервер; в Telegram — синхронизируются через ваше личное облако Telegram. Серверу напоминаний известны только настройки напоминаний, дата собеседования и числа занятий за день. Для статистики посещений используется анонимная Vercel Analytics. Если подключена озвучка ElevenLabs, текст ваших ответов отправляется через наш сервер в ElevenLabs для синтеза речи; на сервере он не сохраняется.</div>
         </div>
       </Section>
 
@@ -233,16 +237,15 @@ function CloudVoice() {
   if (!cloud.available) {
     return (
       <div className="card space-y-2 p-4">
-        <div className="text-[14px] font-semibold">Облачные голоса Azure — не подключены</div>
-        <div className="text-[14px] text-muted">Естественные греческие нейроголоса: мужской (Nestoras) для экзаменатора, женский (Athina). Нужен бесплатный ключ Azure.</div>
+        <div className="text-[14px] font-semibold">Голоса ElevenLabs — не подключены</div>
+        <div className="text-[14px] text-muted">Естественные греческие голоса: для экзаменатора и для ваших ответов. Подключаются на сервере, в приложении ничего вводить не нужно.</div>
         <button onClick={() => setHelp(!help)} className="text-[14px] font-semibold text-accent">{help ? 'Скрыть инструкцию' : 'Как подключить'}</button>
         {help && (
           <ol className="list-decimal space-y-1.5 pl-5 text-[14px] leading-relaxed">
-            <li>Зайдите на <b>portal.azure.com</b> и создайте бесплатный аккаунт (карта нужна только для проверки).</li>
-            <li>«Создать ресурс» → найдите <b>Speech</b> (Azure AI Speech) → «Создать».</li>
-            <li>Регион: <b>West Europe</b>, тариф: <b>Free F0</b> (500 тыс. символов в месяц бесплатно).</li>
-            <li>Откройте ресурс → «Ключи и конечная точка» → скопируйте <b>KEY 1</b> и <b>Location/Region</b>.</li>
-            <li>В Vercel: Project → Settings → Environment Variables → добавьте <code>AZURE_SPEECH_KEY</code> и <code>AZURE_SPEECH_REGION</code> (например, <code>westeurope</code>) → Redeploy.</li>
+            <li>Зарегистрируйтесь на <b>elevenlabs.io</b> (по email, без карты).</li>
+            <li>Profile → <b>API Keys</b> → создайте ключ.</li>
+            <li>На Railway в сервисе сервера добавьте переменную <code>ELEVENLABS_API_KEY</code> — так будут озвучиваться ваши личные ответы.</li>
+            <li>Слова, фразы и вопросы озвучиваются один раз командой <code>npm run audio:generate</code> и попадают в приложение файлами.</li>
           </ol>
         )}
       </div>
@@ -251,7 +254,7 @@ function CloudVoice() {
 
   return (
     <div className="card space-y-4 p-4">
-      <Toggle on={st.cloudTts} onChange={(v) => set({ cloudTts: v })} label="Облачные нейроголоса (Azure)" />
+      <Toggle on={st.cloudTts} onChange={(v) => set({ cloudTts: v })} label="Естественные голоса (ElevenLabs)" />
       {st.cloudTts && (
         <>
           <div>
@@ -266,7 +269,11 @@ function CloudVoice() {
             <Btn kind="soft" onClick={() => test('examiner', 'Καλημέρα σας. Πώς σας λένε;')}><Volume2 size={17} /> Экзаменатор</Btn>
             <Btn kind="soft" onClick={() => test('me', 'Με λένε Άννα. Είμαι από τη Ρωσία.')}><Volume2 size={17} /> Мой голос</Btn>
           </div>
-          <div className="text-[12px] text-muted">Прослушанные фразы кешируются. Без интернета включается голос браузера.</div>
+          <div className="text-[12px] text-muted">
+            {cloud.staticKeys.size > 0 ? `Готовых фраз: ${cloud.staticKeys.size} — работают и без интернета. ` : ''}
+            {cloud.server ? 'Ваши ответы озвучиваются на лету и кешируются на устройстве. ' : 'Ваши ответы — голосом браузера (сервер озвучки не подключён). '}
+            Без интернета включается голос браузера.
+          </div>
         </>
       )}
     </div>

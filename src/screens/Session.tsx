@@ -38,11 +38,10 @@ export default function Session({ filter, title }: { filter?: SessionFilter; tit
   // Заранее скачиваем звук следующей карточки, чтобы не было паузы.
   useEffect(() => {
     if (!upcoming) return
-    const rate = useStore.getState().settings.rate
     if (upcoming.kind === 'qa') {
-      prefetch(upcoming.item.questions(ctx).map((q) => q.gr), 'examiner', rate)
-      prefetch(answerOf(upcoming.item, ctx, useStore.getState().overrides).map((l) => l.gr), 'me', rate)
-    } else prefetch([vocabGr(upcoming.v, ctx)], 'me', rate)
+      prefetch(upcoming.item.questions(ctx).map((q) => q.gr), 'examiner')
+      prefetch(answerOf(upcoming.item, ctx, useStore.getState().overrides).map((l) => l.gr), 'me')
+    } else prefetch([vocabGr(upcoming.v, ctx)], 'me')
   }, [upcoming, ctx])
   const total = initial.queue.length
   const progress = total ? (done + seen.size) / (2 * total) : 0

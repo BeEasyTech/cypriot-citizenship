@@ -49,7 +49,7 @@ export interface Settings {
   simCount: number
   simTimer: number
   simShowText: boolean
-  /** Облачная озвучка (Azure), если сервер настроен. */
+  /** Естественные голоса ElevenLabs (готовые файлы и сервер). */
   cloudTts: boolean
   examinerVoice: 'm' | 'f'
   /** Голос для моих ответов: по роду из анкеты или вручную. */

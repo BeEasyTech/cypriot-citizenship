@@ -518,6 +518,11 @@ export const FIELDS: FieldDef[] = [
   { key: 'ref2Job', label: 'Кем работает (по-гречески, в нужном роде)', type: 'text', section: 'referees', placeholder: 'δασκάλα' },
   { key: 'ref2Since', label: 'Знакомы с (год)', type: 'year', section: 'referees' },
   { key: 'ref2Met', label: 'Где познакомились', type: 'select', section: 'referees', options: opts(MET_PLACES) },
+  { key: 'ref3Gender', label: 'Поручитель 3 — пол', type: 'gender', section: 'referees' },
+  { key: 'ref3Name', label: 'Поручитель 3 — имя и фамилия', type: 'name', section: 'referees', hint: GR_HINT, placeholder: 'Γιώργος Παπαδόπουλος', placeholderEn: 'Giorgos Papadopoulos' },
+  { key: 'ref3Job', label: 'Кем работает (по-гречески, в нужном роде)', type: 'text', section: 'referees', placeholder: 'λογιστής' },
+  { key: 'ref3Since', label: 'Знакомы с (год)', type: 'year', section: 'referees' },
+  { key: 'ref3Met', label: 'Где познакомились', type: 'select', section: 'referees', options: opts(MET_PLACES) },
 
   // паспорт
   { key: 'passportReasons', label: 'Зачем паспорт (выберите 2, по порядку)', type: 'multi', section: 'passport', options: opts(PASSPORT_REASONS) },
@@ -554,6 +559,7 @@ export const DEFAULT_PROFILE: Profile = {
   spouseGender: 'f',
   ref1Gender: 'm',
   ref2Gender: 'f',
+  ref3Gender: 'm',
   fatherStatus: 'works',
   motherStatus: 'works',
   children: [],

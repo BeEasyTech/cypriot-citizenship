@@ -101,6 +101,9 @@ const atTime = (v: unknown, label: string): Tri => {
   return tri(`${h12 === 1 ? 'στη' : 'στις'} ${h12}${mm} ${gr}`, `at ${h12}${mm} ${H < 12 ? 'a.m.' : 'p.m.'}`, `в ${h12}${mm} ${ru}`)
 }
 
+/** Поручители — три гражданина Кипра, подписавшие заявление. */
+const REFEREES = ['ref1', 'ref2', 'ref3'] as const
+
 const ordinals = [
   t('Πρώτον', 'First', 'Во-первых'),
   t('Δεύτερον', 'Second', 'Во-вторых'),
@@ -992,25 +995,24 @@ export const TOPICS: Topic[] = [
     id: 't19', num: 19, title: 'Поручители', emoji: '✍️',
     items: [
       {
-        id: 'q19-who', title: 'Кто подписал ваше заявление?', fields: ['ref1Name', 'ref1Gender', 'ref2Name', 'ref2Gender'],
+        id: 'q19-who', title: 'Кто подписал ваше заявление?', fields: ['ref1Name', 'ref1Gender', 'ref2Name', 'ref2Gender', 'ref3Name', 'ref3Gender'],
         questions: Q(
           t('Ποιοι υπέγραψαν την αίτηση;', 'Who signed the application?', 'Кто подписал заявление?'),
           t('Ποιοι υπέγραψαν την αίτησή σας;', 'Who signed your application?', 'Кто подписал ваше заявление?'),
         ),
         answer: (c) => {
-          const r1 = c.name('ref1Name', 'Поручитель 1'), r2 = c.name('ref2Name', 'Поручитель 2')
-          const a1 = c.p.ref1Gender === 'f' ? 'η' : 'ο', a2 = c.p.ref2Gender === 'f' ? 'η' : 'ο'
+          const refs = REFEREES.map((r, i) => ({ n: c.name(`${r}Name`, `Поручитель ${i + 1}`), art: c.p[`${r}Gender`] === 'f' ? 'η' : 'ο' }))
           return [t(
-            `Την αίτηση υπέγραψαν δύο Κύπριοι πολίτες: ${a1} ${r1.gr} και ${a2} ${r2.gr}.`,
-            `The application was signed by two Cypriot citizens: ${r1.en} and ${r2.en}.`,
-            `Заявление подписали два гражданина Кипра: ${r1.ru} и ${r2.ru}.`,
+            `Την αίτηση υπέγραψαν τρεις Κύπριοι πολίτες: ${joinGr(refs.map((r) => `${r.art} ${r.n.gr}`))}.`,
+            `The application was signed by three Cypriot citizens: ${joinEn(refs.map((r) => r.n.en))}.`,
+            `Заявление подписали три гражданина Кипра: ${joinRu(refs.map((r) => r.n.ru))}.`,
           )]
         },
       },
       {
-        id: 'q19-about', title: 'Что вы знаете об этих людях?', fields: ['ref1Job', 'ref1Since', 'ref1Met', 'ref2Job', 'ref2Since', 'ref2Met'],
+        id: 'q19-about', title: 'Что вы знаете об этих людях?', fields: ['ref1Job', 'ref1Since', 'ref1Met', 'ref2Job', 'ref2Since', 'ref2Met', 'ref3Job', 'ref3Since', 'ref3Met'],
         questions: Q(t('Τι ξέρετε για αυτούς τους ανθρώπους;', 'What do you know about these people?', 'Что вы знаете об этих людях?')),
-        answer: (c) => (['ref1', 'ref2'] as const).flatMap((r, i) => {
+        answer: (c) => REFEREES.flatMap((r, i) => {
           const f = c.p[`${r}Gender`] === 'f'
           const n = c.name(`${r}Name`, `Поручитель ${i + 1}`)
           const first = t(n.gr.split(' ')[0], n.en.split(' ')[0], n.ru.split(' ')[0])

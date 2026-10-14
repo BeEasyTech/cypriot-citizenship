@@ -66,7 +66,7 @@ function profilePair(gender: 'm' | 'f', spouseGender: 'm' | 'f', marital: string
     ...P.DEFAULT_PROFILE, gender, spouseGender, marital,
     workStatus: 'employee', job: 'dev', duties: ['code', 'team'], tenure: 'own', loan: true, moneySources: ['savings', 'loan'],
     spouseWorks: true, investments: ['stocks'], hobbies: ['swim', 'read', 'cook'],
-    foods: ['halloumi', 'kleftiko'], cyFriendsMet: 'work', ref1Met: 'work', ref2Met: 'neighbours', oldHome: 'sold',
+    foods: ['halloumi', 'kleftiko'], cyFriendsMet: 'work', ref1Met: 'work', ref2Met: 'neighbours', ref3Met: 'friends', oldHome: 'sold',
     permitType: 'permanent', visitHome: 'yearly', lastTripWhy: 'holiday', pet: 'dog', favPlace: ['troodos', 'akamas'],
   }
   const kid = (name: string, d: string, city: string) => ({ id: name, name: { gr: name, en: name }, gender: 'm', birthDate: d, birthPlace: { id: city }, school: 'primary' })
@@ -78,6 +78,7 @@ function profilePair(gender: 'm' | 'f', spouseGender: 'm' | 'f', marital: string
     children: [kid('Παιδί Α', '2010-01-01', 'riga')], parentsCity: { id: 'samara' }, parentsCountry: { id: 'ru' }, fatherName: { gr: 'Πατέρας Α' }, motherName: { gr: 'Μητέρα Α' },
     uni: 'Πανεπιστήμιο Α', uniCity: { id: 'kazan' }, subject: 'μάθημα Α', gradYear: 2002, profession: 'Επάγγελμα Α', greekSince: 2019, cyFriends: 'Φίλοι Α',
     ref1Name: { gr: 'Εγγυητής Α' }, ref1Job: 'Δουλειά Α', ref1Since: 2016, ref2Name: { gr: 'Εγγυήτρια Α' }, ref2Job: 'Δουλειά Α2', ref2Since: 2017,
+    ref3Name: { gr: 'Τρίτος Α' }, ref3Job: 'Δουλειά Α3', ref3Since: 2018,
     tripsPerYear: 2, daysAbroad: 20, lastTripPlace: { id: 'gr' }, lastTripDate: '2025-08-01', applicationDate: '2025-01-01', permitSince: 2018, petName: 'Ζώο Α',
     bonus: 1111, dividends: 111, wakeTime: '06:10', workStart: '08:10', workEnd: '17:10', sleepTime: '22:10', bedrooms: 2,
   }
@@ -89,6 +90,7 @@ function profilePair(gender: 'm' | 'f', spouseGender: 'm' | 'f', marital: string
     children: [kid('Παιδί Β', '2018-02-02', 'larnaca')], parentsCity: { id: 'almaty' }, parentsCountry: { id: 'kz' }, fatherName: { gr: 'Πατέρας Β' }, motherName: { gr: 'Μητέρα Β' },
     uni: 'Πανεπιστήμιο Β', uniCity: { id: 'minsk' }, subject: 'μάθημα Β', gradYear: 2012, profession: 'Επάγγελμα Β', greekSince: 2022, cyFriends: 'Φίλοι Β',
     ref1Name: { gr: 'Εγγυητής Β' }, ref1Job: 'Δουλειά Β', ref1Since: 2021, ref2Name: { gr: 'Εγγυήτρια Β' }, ref2Job: 'Δουλειά Β2', ref2Since: 2022,
+    ref3Name: { gr: 'Τρίτος Β' }, ref3Job: 'Δουλειά Β3', ref3Since: 2023,
     tripsPerYear: 5, daysAbroad: 45, lastTripPlace: { id: 'it' }, lastTripDate: '2026-04-01', applicationDate: '2026-02-01', permitSince: 2021, petName: 'Ζώο Β',
     bonus: 2222, dividends: 222, wakeTime: '07:20', workStart: '09:20', workEnd: '18:20', sleepTime: '23:20', bedrooms: 3,
   }

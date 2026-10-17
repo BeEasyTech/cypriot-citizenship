@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react'
-import { ChevronRight, Search, AlertCircle, Play, Pencil, Plus, SlidersHorizontal, ChevronDown, FileText } from 'lucide-react'
+import { ChevronRight, Search, AlertCircle, Play, Pencil, Plus, SlidersHorizontal, ChevronDown, FileText, Turtle } from 'lucide-react'
 import { useStore } from '../store'
 import { useNav } from '../router'
 import { answerOf, isActive, isOverridden, qaCardId, topicMastery, useCtx, useTopics } from '../content'
@@ -132,6 +132,7 @@ function ItemCard({ item, view }: { item: QItem; topic: Topic; view: View }) {
           <span className="flex-1 text-[12px] font-semibold uppercase tracking-wide text-muted">
             Мой ответ {edited && <span className="ml-1 rounded bg-accent-soft px-1.5 py-0.5 text-[10px] text-accent normal-case">изменён</span>}
           </span>
+          <SpeakBtn texts={answer.map((l) => l.gr)} size={18} speakKey={`${item.id}:ans`} slow icon={<Turtle size={17} />} />
           <SpeakBtn texts={answer.map((l) => l.gr)} size={18} speakKey={`${item.id}:ans`} />
         </div>
         {answer.map((l, i) => <TriLine key={i} line={l} idx={i} showEn={view !== 'gr'} showRu={view === 'all'} speakPrefix={`${item.id}:ans`} />)}

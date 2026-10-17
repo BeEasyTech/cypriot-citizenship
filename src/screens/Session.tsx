@@ -169,6 +169,7 @@ function QaCard({ card, flipped, onFlip }: { card: Extract<CardRef, { kind: 'qa'
             <div className="flex items-center gap-1">
               <LangToggle on={showEn} set={setShowEn}>EN</LangToggle>
               <LangToggle on={showRu} set={setShowRu}>RU</LangToggle>
+              <SpeakBtn texts={answer.map((l) => l.gr)} speakKey="ans" slow icon={<Turtle size={19} />} />
               <SpeakBtn texts={answer.map((l) => l.gr)} speakKey="ans" />
             </div>
           </div>

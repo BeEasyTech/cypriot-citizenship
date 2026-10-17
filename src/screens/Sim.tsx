@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { X, Timer, RotateCcw } from 'lucide-react'
+import { X, Timer, RotateCcw, Turtle } from 'lucide-react'
 import { useStore } from '../store'
 import { useNav } from '../router'
 import { answerOf, isActive, maxIvlFor, qaCardId, useCtx, useItemIndex } from '../content'
@@ -214,6 +214,7 @@ function Question({ step, n, total, onScore }: { step: Step; n: number; total: n
                 <span className="text-[13px] font-semibold uppercase tracking-wide text-muted">Эталон</span>
                 <div className="flex items-center gap-1">
                   <button onClick={() => setShowEn(!showEn)} className={cx('min-h-8 rounded-full px-2.5 text-[12px] font-bold', showEn ? 'bg-copper text-white' : 'bg-line/70 text-muted')}>EN</button>
+                  <SpeakBtn texts={answer.map((l) => l.gr)} speakKey="simans" slow icon={<Turtle size={19} />} />
                   <SpeakBtn texts={answer.map((l) => l.gr)} speakKey="simans" />
                 </div>
               </div>

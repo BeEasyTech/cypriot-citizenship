@@ -128,7 +128,10 @@ export function useTtsOpts() {
 }
 
 /** Кнопка «прослушать»: одна фраза или последовательность. */
-export function SpeakBtn({ text, texts, lang = 'el', slow, size = 20, className, label, speakKey, role = 'me' }: {
+/** Какая кнопка запустила текущее воспроизведение (обычная и медленная делят ключи подсветки строк). */
+let startedBy: string | null = null
+
+export function SpeakBtn({ text, texts, lang = 'el', slow, size = 20, className, label, speakKey, role = 'me', icon, ariaLabel }: {
   text?: string
   texts?: string[]
   lang?: Lang
@@ -138,11 +141,15 @@ export function SpeakBtn({ text, texts, lang = 'el', slow, size = 20, className,
   label?: ReactNode
   speakKey?: string
   role?: Role
+  /** Иконка вместо динамика (например, черепаха для медленного режима). */
+  icon?: ReactNode
+  ariaLabel?: string
 }) {
   const o = useTtsOpts()
   const cur = useSpeakingKey()
   const key = speakKey ?? (texts ? `seq:${texts.join('|')}` : text ?? '')
-  const active = cur !== null && (cur === key || (texts && cur.startsWith(key + ':')))
+  const me = `${key}${slow ? '#slow' : ''}`
+  const active = cur !== null && startedBy === me && (cur === key || (texts && cur.startsWith(key + ':')))
   const rate = slow ? Math.max(0.5, o.rate * 0.7) : o.rate
   return (
     <button
@@ -150,14 +157,15 @@ export function SpeakBtn({ text, texts, lang = 'el', slow, size = 20, className,
         e.stopPropagation()
         haptic.tap()
         if (active) return stop()
+        startedBy = me
         if (texts) speakAll(texts, { ...o, rate, lang, role, keyPrefix: key })
         else if (text) speak(text, { ...o, rate, lang, role, key })
       }}
       className={cx('inline-flex shrink-0 items-center justify-center gap-1.5 rounded-full text-accent active:bg-accent-soft',
         label ? 'min-h-9 px-3 text-[14px] font-semibold bg-accent-soft' : 'h-9 w-9', className)}
-      aria-label="Прослушать"
+      aria-label={ariaLabel ?? (slow ? 'Прослушать медленно' : 'Прослушать')}
     >
-      {active ? <Square size={size - 4} fill="currentColor" /> : <Volume2 size={size} />}
+      {active ? <Square size={size - 4} fill="currentColor" /> : (icon ?? <Volume2 size={size} />)}
       {label}
     </button>
   )
